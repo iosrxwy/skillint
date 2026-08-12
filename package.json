@@ -1,0 +1,55 @@
+{
+  "name": "skillint",
+  "version": "0.1.0",
+  "description": "Lint and audit agent skills for Codex, Cursor, and Claude Code. Find duplicates, missing metadata, and context bloat.",
+  "keywords": [
+    "codex",
+    "cursor",
+    "claude",
+    "agent-skills",
+    "skills",
+    "lint",
+    "cli",
+    "AGENTS.md"
+  ],
+  "license": "MIT",
+  "author": "iosrxwy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iosrxwy/skillint.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iosrxwy/skillint/issues"
+  },
+  "homepage": "https://github.com/iosrxwy/skillint#readme",
+  "type": "module",
+  "bin": {
+    "skillint": "dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=18.18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "dependencies": {
+    "commander": "^15.0.0",
+    "picocolors": "^1.1.1",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.2.0",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  }
+}
