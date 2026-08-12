@@ -1,45 +1,60 @@
-# skillint
+<p align="center">
+  <a href="./README.md">English</a> ·
+  <a href="./README.zh-CN.md">简体中文</a> ·
+  <a href="./README.zh-TW.md">繁體中文</a> ·
+  <a href="./README.ja.md">日本語</a> ·
+  <a href="./README.ko.md">한국어</a> ·
+  <a href="./README.es.md">Español</a> ·
+  <a href="./README.fr.md">Français</a> ·
+  <a href="./README.de.md">Deutsch</a> ·
+  <a href="./README.pt-BR.md">Português</a> ·
+  <a href="./README.ru.md">Русский</a>
+</p>
 
-**eslint for AI agent skills.**
+<h1 align="center">skillint</h1>
 
-Codex、Cursor、Claude Code 都会把 `SKILL.md` / `AGENTS.md` 读进上下文。装多了不会更聪明，只会更慢、更贵、更容易选错 skill。
+<p align="center"><b>Static analysis for AI agent skills.</b></p>
 
-`skillint` 扫描这些文件，告诉你：
+<p align="center">
+  Audit <code>SKILL.md</code>, <code>AGENTS.md</code>, and editor rules used by
+  <b>Codex</b>, <b>Cursor</b>, and <b>Claude Code</b>.
+  Find duplicates, missing metadata, and context bloat before they land in the prompt.
+</p>
 
-- 一共有多少 skill，大概吃掉多少 token
-- 哪些重名、缺 description、体积过大
-- 如果要精简，建议留哪些（只给建议，不删文件）
-
-[![CI](https://github.com/iosrxwy/skillint/actions/workflows/ci.yml/badge.svg)](https://github.com/iosrxwy/skillint/actions/workflows/ci.yml)
-
-```bash
-git clone https://github.com/iosrxwy/skillint.git
-cd skillint && npm install && npm run build
-node dist/cli.js scan
-```
-
-English version is below the Chinese section.
+<p align="center">
+  <a href="https://github.com/iosrxwy/skillint/actions/workflows/ci.yml"><img src="https://github.com/iosrxwy/skillint/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
+  <a href="https://github.com/iosrxwy/skillint/issues"><img src="https://img.shields.io/github/issues/iosrxwy/skillint" alt="issues"></a>
+  <a href="https://github.com/iosrxwy/skillint/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/skillint?style=social" alt="stars"></a>
+</p>
 
 ---
 
-## 它解决什么问题
+## Why this exists
 
-现在很多人会一键装几十上百个 agent skills。Agent 真正需要的是**短、准、不重复**的目录，不是把整个技能市场塞进 `~/.cursor/skills`。
+Coding agents no longer read one system prompt. They load a catalog of skills on demand.
 
-典型后果：
+That catalog only works when it is **small, named, and described**. A workstation that copied hundreds of skills will:
 
-| 现象 | 影响 |
-| --- | --- |
-| 同一个 skill 复制了 3 份 | Agent 不知道该用哪一份 |
-| 没有 `description` | 不会被按需加载，等于白装 |
-| 单个 SKILL.md 上万 token | 一调用就把上下文打满 |
-| 全局装了 1000+ 个 skill | 光目录元数据就可能上万 token |
+- spend thousands of tokens on metadata before any real work starts
+- hide the useful skill behind three near-identical copies
+- inject 10k-token bodies into a single turn
+- fail silently when `description` is missing, so the skill never gets selected
 
-`skillint` 就是给这个目录做体检。
+`skillint` is the linter for that folder. It does not execute skills. It does not delete files. It reports what an agent would have to carry.
 
-## 快速开始
+## Features
 
-需要 Node.js 18+。
+- **Inventory** — discover skills and rules across Codex, Cursor, Claude Code, and project roots
+- **Token budget** — estimate metadata cost vs full-body cost (`characters / 4`)
+- **Doctor** — duplicate names, missing descriptions, oversized files, always-on rule bloat
+- **Prune plan** — ranked keep/drop suggestions; never mutates the filesystem
+- **Markdown report** — CI-friendly artifact for pull requests and maintainer review
+- **JSON output** — every command supports `--json`
+
+## Install
+
+Requires Node.js 18.18 or later.
 
 ```bash
 git clone https://github.com/iosrxwy/skillint.git
@@ -49,38 +64,37 @@ npm run build
 node dist/cli.js scan
 ```
 
-常用命令：
+After a global link:
 
 ```bash
-node dist/cli.js scan              # 统计数量和 token
-node dist/cli.js doctor            # 查重复、缺字段、过大文件
-node dist/cli.js tokens            # 只看数字
-node dist/cli.js prune --keep 12   # 给出保留建议，不删除任何文件
+npm link
+skillint scan
 ```
 
-只扫当前项目：
+## Quick start
 
 ```bash
-node dist/cli.js scan -p
-node dist/cli.js doctor ./skills
+skillint scan                 # inventory + token budget
+skillint doctor               # diagnostics
+skillint tokens               # compact numbers
+skillint prune --keep 12      # suggestions only
+skillint report --out out.md  # markdown audit
 ```
 
-只扫本机全局目录（`~/.cursor`、`~/.claude`、`~/.codex`、`~/.agents`）：
+Scope control:
 
 ```bash
-node dist/cli.js scan -g
+skillint scan -g              # user-level dirs only
+skillint scan -p              # current project only
+skillint doctor ./skills      # one directory
+skillint doctor --json --fail-on error
 ```
 
-输出 JSON（方便接 CI 或自己写脚本）：
+`prune` and `report` are read-only. skillint never deletes a skill file.
 
-```bash
-node dist/cli.js doctor --json
-node dist/cli.js doctor --fail-on error   # 有 error 时退出码为 1
-```
+## Example
 
-## 真实扫描结果
-
-在一台装了大量 skills 的开发机上：
+From a developer machine with a large local skill library:
 
 ```text
 skillint scan
@@ -90,110 +104,55 @@ skillint scan
 Context cost
   metadata (name + description):  ~68,792 tokens
   all bodies if fully loaded:     ~3,344,017 tokens
+  always-on rules:                ~0 tokens
 
 By source
-  cursor-global     1460 files
-  agents-global       69 files
-  codex-global        32 files
+  cursor-global     1460 files   meta ~62,297   body ~3,207,601
+  agents-global       69 files   meta ~4,517    body ~84,270
+  codex-global        32 files   meta ~1,863    body ~43,011
 ```
 
-同一台机器跑 `doctor`：**233 个问题**（60 个重名、152 个过大、20 个缺 description）。
+`skillint doctor` on the same machine: **233 findings** (60 duplicate names, 152 oversized files, 20 missing descriptions).
 
-Agent 不需要三百万 token 的 skills。
+An agent does not need three million tokens of skills.
 
-## 扫描范围
+## What it scans
 
-| 工具 | 路径 |
+| Agent / surface | Paths |
 | --- | --- |
-| Cursor | `~/.cursor/skills`、`.cursor/skills`、`.cursor/rules` |
-| Claude Code | `~/.claude/skills`、`.claude/skills` |
-| Codex | `~/.codex/skills`、`.codex/skills` |
-| 通用 | `~/.agents/skills`、`.agents/skills`、`skills/` |
-| 项目根目录 | `AGENTS.md`、`CLAUDE.md`、`GEMINI.md`、`.cursorrules`、`.github/copilot-instructions.md` |
+| Cursor | `~/.cursor/skills`, `.cursor/skills`, `.cursor/rules` |
+| Claude Code | `~/.claude/skills`, `.claude/skills` |
+| Codex | `~/.codex/skills`, `.codex/skills` |
+| Generic agents | `~/.agents/skills`, `.agents/skills`, `skills/` |
+| Project root | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` |
 
-Token 按 `字符数 / 4` 估算，用来比较体积，不是各家官方 tokenizer。
+Token counts are **estimates**, not a vendor tokenizer. Use them to compare size, not to bill APIs.
 
-`prune` **不会删除文件**，只打印建议保留 / 建议拿掉的列表。
+## CI
 
-## 给 Agent 自己用
+```yaml
+- run: node dist/cli.js doctor ./skills --fail-on error
+- run: node dist/cli.js report --out skillint-report.md -p
+```
 
-仓库里带了 `skills/skillint/SKILL.md`，可以用：
+This repository dogfoods `doctor` on `./skills` in GitHub Actions.
+
+## Use it as an agent skill
+
+The repo ships `skills/skillint/SKILL.md`:
 
 ```bash
 npx skills add iosrxwy/skillint
 ```
 
-## 开发
+## Development
 
 ```bash
 npm test
 npm run build
+node dist/cli.js --help
 ```
 
 ## License
 
-MIT
-
----
-
-# skillint (English)
-
-Lint `SKILL.md`, `AGENTS.md`, and editor rules used by **Codex**, **Cursor**, and **Claude Code**.
-
-Coding agents load skills on demand. That only works when the catalog is small, named, and described. A machine with hundreds of copied skills will waste tokens, hide the useful skill behind duplicates, and blow the context window.
-
-`skillint` is eslint for that folder.
-
-## Install
-
-```bash
-git clone https://github.com/iosrxwy/skillint.git
-cd skillint
-npm install
-npm run build
-node dist/cli.js scan
-```
-
-## Commands
-
-```bash
-node dist/cli.js scan              # catalog + token budget
-node dist/cli.js doctor            # duplicates, missing descriptions, oversized files
-node dist/cli.js tokens            # compact numbers
-node dist/cli.js prune --keep 12   # suggestions only; never deletes files
-```
-
-```bash
-node dist/cli.js scan -g           # user-level dirs only
-node dist/cli.js scan -p           # current project only
-node dist/cli.js doctor --json
-node dist/cli.js doctor --fail-on error
-```
-
-## What it scans
-
-| Source | Paths |
-| --- | --- |
-| Cursor | `~/.cursor/skills`, `.cursor/skills`, `.cursor/rules` |
-| Claude | `~/.claude/skills`, `.claude/skills` |
-| Codex | `~/.codex/skills`, `.codex/skills` |
-| Agents | `~/.agents/skills`, `.agents/skills`, `skills/` |
-| Project | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` |
-
-Token counts are estimates (`characters / 4`), not a vendor tokenizer.
-
-## Example
-
-From a developer machine with a large local skill library:
-
-```text
-6 roots · 1,553 skills · 10 rules
-metadata ~68,792 tokens
-all bodies ~3,344,017 tokens
-```
-
-`doctor` on the same machine: **233 issues** (60 duplicate names, 152 oversized files, 20 missing descriptions).
-
-## License
-
-MIT
+[MIT](./LICENSE) © 2026 [iosrxwy](https://github.com/iosrxwy)

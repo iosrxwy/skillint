@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { writeFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { discover } from "./discover.js";
 import { doctor, summarizeTokens } from "./doctor.js";
 import { compactFiles, formatDoctor, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
 import { planPrune } from "./prune.js";
+import { formatReport } from "./report.js";
 
 function packageVersion(): string {
   try {
@@ -15,7 +17,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.1.0";
+    return "0.2.0";
   }
 }
 
@@ -30,37 +32,49 @@ function parseRoots(paths: string[], opts: { global?: boolean; project?: boolean
   };
 }
 
+function withScanOptions(command: Command): Command {
+  return command
+    .argument("[paths...]", "optional extra directories to scan")
+    .option("--json", "print JSON")
+    .option("-g, --global", "include ~/.cursor, ~/.claude, ~/.codex, ~/.agents")
+    .option("-p, --project", "include the current project");
+}
+
 const program = new Command();
 
 program
   .name("skillint")
-  .description("eslint for AI agent skills — audit Codex, Cursor, and Claude Code SKILL.md files")
-  .version(packageVersion());
+  .description("Static analysis for AI agent skills used by Codex, Cursor, and Claude Code")
+  .version(packageVersion())
+  .showHelpAfterError()
+  .addHelpText(
+    "after",
+    `
+Examples:
+  $ skillint scan
+  $ skillint doctor -g
+  $ skillint report --out skillint-report.md
+  $ skillint prune --keep 12
+`,
+  );
 
-program
-  .command("scan")
-  .description("Discover skills and rules, then show context cost")
-  .argument("[paths...]", "optional extra directories to scan")
-  .option("--json", "print JSON")
-  .option("-g, --global", "include ~/.cursor, ~/.claude, ~/.codex, ~/.agents")
-  .option("-p, --project", "include the current project")
-  .action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean }) => {
-    const result = await discover(parseRoots(paths, opts));
-    const summary = summarizeTokens(result.files);
-    if (opts.json) {
-      process.stdout.write(toJson({ roots: result.roots, summary, files: compactFiles(result.files) }));
-      return;
-    }
-    console.log(formatScan(result, summary));
-  });
+withScanOptions(
+  program
+    .command("scan", { isDefault: true })
+    .description("Discover skills and rules, then show estimated context cost"),
+).action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean }) => {
+  const result = await discover(parseRoots(paths, opts));
+  const summary = summarizeTokens(result.files);
+  if (opts.json) {
+    process.stdout.write(toJson({ roots: result.roots, summary, files: compactFiles(result.files) }));
+    return;
+  }
+  console.log(formatScan(result, summary));
+});
 
-program
-  .command("doctor")
-  .description("Find duplicates, missing metadata, and oversized skills")
-  .argument("[paths...]", "optional extra directories to scan")
-  .option("--json", "print JSON")
-  .option("-g, --global", "include ~/.cursor, ~/.claude, ~/.codex, ~/.agents")
-  .option("-p, --project", "include the current project")
+withScanOptions(
+  program.command("doctor").description("Find duplicates, missing metadata, and oversized skills"),
+)
   .option("--fail-on <level>", "exit 1 on error or warning", "error")
   .action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean; failOn?: string }) => {
     const result = await discover(parseRoots(paths, opts));
@@ -77,14 +91,8 @@ program
     if (failOn === "warning" && warnings) process.exitCode = 1;
   });
 
-program
-  .command("tokens")
-  .description("Print a compact token budget")
-  .argument("[paths...]", "optional extra directories to scan")
-  .option("--json", "print JSON")
-  .option("-g, --global", "include ~/.cursor, ~/.claude, ~/.codex, ~/.agents")
-  .option("-p, --project", "include the current project")
-  .action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean }) => {
+withScanOptions(program.command("tokens").description("Print a compact token budget")).action(
+  async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean }) => {
     const result = await discover(parseRoots(paths, opts));
     const summary = summarizeTokens(result.files);
     if (opts.json) {
@@ -92,16 +100,11 @@ program
       return;
     }
     console.log(formatTokens(summary));
-  });
+  },
+);
 
-program
-  .command("prune")
-  .description("Suggest which skills to keep. Never deletes files.")
-  .argument("[paths...]", "optional extra directories to scan")
+withScanOptions(program.command("prune").description("Suggest which skills to keep. Never deletes files."))
   .option("--keep <n>", "how many unique skills/rules to keep", "20")
-  .option("--json", "print JSON")
-  .option("-g, --global", "include ~/.cursor, ~/.claude, ~/.codex, ~/.agents")
-  .option("-p, --project", "include the current project")
   .action(async (paths: string[], opts: { keep?: string; json?: boolean; global?: boolean; project?: boolean }) => {
     const result = await discover(parseRoots(paths, opts));
     const keep = Number.parseInt(opts.keep ?? "20", 10);
@@ -116,6 +119,27 @@ program
       return;
     }
     console.log(formatPrune(plan));
+  });
+
+withScanOptions(program.command("report").description("Write a Markdown audit report"))
+  .option("-o, --out <file>", "output path", "skillint-report.md")
+  .action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean; out?: string }) => {
+    const result = await discover(parseRoots(paths, opts));
+    const summary = summarizeTokens(result.files);
+    const findings = doctor(result.files);
+    const markdown = formatReport({
+      generatedAt: new Date().toISOString(),
+      result,
+      summary,
+      findings,
+    });
+    if (opts.json) {
+      process.stdout.write(toJson({ out: opts.out, summary, findings }));
+      return;
+    }
+    const out = resolve(opts.out ?? "skillint-report.md");
+    await writeFile(out, markdown, "utf8");
+    console.log(`wrote ${out}`);
   });
 
 program.parseAsync().catch((error: unknown) => {

@@ -5,3 +5,5 @@ coverage/
 *.log
 .env
 .env.*
+skillint-report.md
+

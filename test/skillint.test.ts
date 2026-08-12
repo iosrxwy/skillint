@@ -122,3 +122,20 @@ describe("discover / doctor / prune", () => {
     expect(plan.keep.every((file) => result.files.some((item) => item.path === file.path))).toBe(true);
   });
 });
+
+describe("report", () => {
+  it("renders a markdown audit", async () => {
+    const { formatReport } = await import("../src/report.js");
+    const root = await fixtureRoot();
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const markdown = formatReport({
+      generatedAt: "2026-08-13T00:00:00.000Z",
+      result,
+      summary: summarizeTokens(result.files),
+      findings: doctor(result.files),
+    });
+    expect(markdown).toContain("# skillint report");
+    expect(markdown).toContain("## Findings");
+    expect(markdown).toContain("duplicate-name");
+  });
+});
