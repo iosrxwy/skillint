@@ -1,7 +1,7 @@
 {
   "name": "skillint",
   "version": "0.1.0",
-  "description": "Lint and audit agent skills for Codex, Cursor, and Claude Code. Find duplicates, missing metadata, and context bloat.",
+  "description": "eslint for AI agent skills. Find duplicate, oversized, and token-hungry SKILL.md files in Codex, Cursor, and Claude Code.",
   "keywords": [
     "codex",
     "cursor",

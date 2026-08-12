@@ -1,6 +1,6 @@
 ---
 name: skillint
-description: Audit Codex, Cursor, and Claude Code agent skills. Use when the user wants to lint skills, find duplicate SKILL.md files, estimate context tokens, or slim down AGENTS.md and rules.
+description: Audit Codex, Cursor, and Claude Code agent skills. Use when the user wants to lint skills, find duplicate SKILL.md files, estimate context tokens, or slim down AGENTS.md and rules. skillint is eslint for the skills folder.
 ---
 
 # skillint

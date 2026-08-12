@@ -34,7 +34,7 @@ const program = new Command();
 
 program
   .name("skillint")
-  .description("Lint and audit agent skills for Codex, Cursor, and Claude Code")
+  .description("eslint for AI agent skills — audit Codex, Cursor, and Claude Code SKILL.md files")
   .version(packageVersion());
 
 program
