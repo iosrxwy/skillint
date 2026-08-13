@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/logo.png" width="120" height="120" alt="skillint">
+  <img src="docs/logo-light.svg" width="120" height="120" alt="skillint">
 </p>
 
 <h1 align="center">skillint</h1>
@@ -32,7 +32,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/social.svg" alt="skillint — AI agent skills 静态分析" width="720">
+  <img src="docs/social-light.svg" alt="skillint — 看清每个 Agent 实际能发现什么" width="720">
 </p>
 
 ```bash
@@ -63,7 +63,7 @@ npx skillint
 - 超大正文和 always-on rules 把潜在上下文成本藏了起来
 
 <p align="center">
-  <img src="docs/hero.svg" alt="把 Agent skill 目录分析成可执行的只读审计报告" width="720">
+  <img src="docs/hero-light.svg" alt="把 Cursor、Claude Code 和 Codex 目录解析成可解释状态" width="720">
 </p>
 
 `skillint` 把这些目录整理成可执行的审计结果：清单、诊断、0–100 健康分、体量估算和精简建议，全程不删除文件。
@@ -118,6 +118,10 @@ npx skillint map [cwd] --agent codex
 npx skillint map . --agent codex --json
 ```
 
+<p align="center">
+  <img src="docs/map-light.svg" alt="Codex Agent 感知目录映射的浅色示例" width="720">
+</p>
+
 JSON 输出包含 `schemaVersion: 1`，并提供逻辑路径、真实路径、作用域、资源角色、来源类型、官方文档 URL、可见性和解析方式。
 
 - `effective`：静态上属于当前说明链，或无条件加载
@@ -135,12 +139,12 @@ JSON 输出包含 `schemaVersion: 1`，并提供逻辑路径、真实路径、�
 在一台装了大量 skills 的开发机上：
 
 <p align="center">
-  <img src="docs/scan.svg" alt="skillint scan：1,553 个 skills，正文估算约 334 万 token" width="720">
+  <img src="docs/scan-light.svg" alt="skillint 浅色扫描示例：1,658 个 skills，正文估算约 343 万 token" width="720">
 </p>
 
-同一台机器跑 `doctor`：**233 个问题**（60 个重名、152 个过大、20 个缺 description）。
+同一台机器跑 `doctor`：**271 个结果**，其中包括 157 个正文过大、13 个同系列重名，以及 54 个仅作为提示而非错误的跨 Agent 同步副本。
 
-约 334 万 token 是对已发现文件的体量估算，不代表任何 Agent 会把整个目录全部加载。
+约 343 万 token 是对已发现文件的体量估算，不代表任何 Agent 会把整个目录全部加载。
 
 ## `scan` 的物理清单范围
 

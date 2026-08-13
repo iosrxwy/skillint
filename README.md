@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/logo.png" width="120" height="120" alt="skillint">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/logo-light.svg" width="120" height="120" alt="skillint">
 </p>
 
 <h1 align="center">skillint</h1>
@@ -34,7 +34,7 @@
 </p>
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/social.svg" alt="skillint — static analysis for AI agent skills" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/social-light.svg" alt="skillint — know what each agent can actually load" width="720">
 </p>
 
 ```bash
@@ -65,7 +65,7 @@ Coding agents can discover instructions from many global and project directories
 - oversized bodies and always-on rules hide potential context cost
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/hero.svg" alt="Agent skill catalog analyzed into an actionable read-only audit" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/hero-light.svg" alt="Cursor, Claude Code, and Codex catalogs resolved into explainable states" width="720">
 </p>
 
 `skillint` turns those directories into an actionable audit: inventory, diagnostics, a 0–100 health score, estimated size, and a ranked prune plan without deleting anything.
@@ -122,6 +122,10 @@ npx skillint map [cwd] --agent codex
 npx skillint map . --agent codex --json
 ```
 
+<p align="center">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/map-light.svg" alt="Light example of a Codex agent-aware catalog map" width="720">
+</p>
+
 JSON output has `schemaVersion: 1` and includes logical and real paths, scope, resource role, source kind, official documentation URL, visibility, and resolution.
 
 - `effective` — statically part of the current instruction chain or unconditionally loaded
@@ -139,12 +143,12 @@ Adapter semantics follow the current official docs for [Cursor skills](https://c
 From a developer machine with a large local skill library:
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/scan.svg" alt="skillint scan showing 1,553 skills and an estimated 3.3 million body tokens" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/scan-light.svg" alt="Light skillint scan showing 1,658 skills and an estimated 3.43 million body tokens" width="720">
 </p>
 
-`skillint doctor` on the same machine: **233 findings** (60 duplicate names, 152 oversized files, 20 missing descriptions).
+`skillint doctor` on the same machine: **271 findings**, including 157 oversized bodies, 13 same-family duplicate names, and 54 cross-agent synced copies reported as informational rather than errors.
 
-The ~3.3M-token figure is a sizing estimate for the discovered files, not a claim that any agent loads the entire catalog.
+The ~3.43M-token figure is a sizing estimate for the discovered files, not a claim that any agent loads the entire catalog.
 
 ## What `scan` inventories
 

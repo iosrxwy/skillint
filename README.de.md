@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/logo.png" width="96" height="96" alt="skillint">
+  <img src="docs/logo-light.svg" width="96" height="96" alt="skillint">
 </p>
 
 <h1 align="center">skillint</h1>

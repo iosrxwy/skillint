@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="560" viewBox="0 0 960 560" role="img" aria-labelledby="title desc">
+  <title id="title">skillint map example</title>
+  <desc id="desc">A light command output showing an agent-aware Codex catalog with effective, coexisting, conditional, and unknown resources.</desc>
+  <rect width="960" height="560" rx="28" fill="#F1F4FC"/>
+  <rect x="24" y="24" width="912" height="512" rx="20" fill="#FFFFFF" stroke="#D8E1F0" stroke-width="2"/>
+  <path d="M24 82h912" stroke="#E4EAF3"/>
+  <circle cx="54" cy="54" r="6" fill="#F37D68"/>
+  <circle cx="76" cy="54" r="6" fill="#F3B74F"/>
+  <circle cx="98" cy="54" r="6" fill="#47C7A3"/>
+  <text x="124" y="59" fill="#8294A6" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">example-repo / packages/api</text>
+  <rect x="818" y="40" width="88" height="28" rx="14" fill="#E8F8F3"/>
+  <circle cx="836" cy="54" r="4" fill="#47C7A3"/>
+  <text x="849" y="58" fill="#216A58" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="700">READ ONLY</text>
+
+  <text x="52" y="126" fill="#3B66F0" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16" font-weight="700">$</text>
+  <text x="75" y="126" fill="#16324A" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16">npx skillint map packages/api --agent codex</text>
+  <text x="52" y="166" fill="#16324A" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="20" font-weight="760">skillint map / codex</text>
+  <text x="52" y="193" fill="#8294A6" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13">Static catalog resolution only / model triggering is not predicted</text>
+
+  <g transform="translate(52 221)" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">
+    <rect width="180" height="65" rx="14" fill="#E8F8F3"/>
+    <text x="18" y="26" fill="#216A58" font-size="11" font-weight="700" letter-spacing="1">EFFECTIVE</text>
+    <text x="18" y="50" fill="#16324A" font-size="22" font-weight="750">4</text>
+    <rect x="194" width="180" height="65" rx="14" fill="#FFF4DD"/>
+    <text x="212" y="26" fill="#8A5A08" font-size="11" font-weight="700" letter-spacing="1">COEXISTING</text>
+    <text x="212" y="50" fill="#16324A" font-size="22" font-weight="750">1</text>
+    <rect x="388" width="180" height="65" rx="14" fill="#EDF1FE"/>
+    <text x="406" y="26" fill="#3156BF" font-size="11" font-weight="700" letter-spacing="1">CONDITIONAL</text>
+    <text x="406" y="50" fill="#16324A" font-size="22" font-weight="750">2</text>
+    <rect x="582" width="180" height="65" rx="14" fill="#EEF2F5"/>
+    <text x="600" y="26" fill="#52677A" font-size="11" font-weight="700" letter-spacing="1">UNKNOWN</text>
+    <text x="600" y="50" fill="#16324A" font-size="22" font-weight="750">1</text>
+  </g>
+
+  <text x="52" y="327" fill="#8294A6" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="700" letter-spacing="1.4">RESOURCES</text>
+  <path d="M52 342h856" stroke="#E4EAF3"/>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">
+    <circle cx="61" cy="373" r="5" fill="#47C7A3"/>
+    <text x="78" y="378" fill="#216A58" font-weight="700">effective</text>
+    <text x="175" y="378" fill="#8294A6">skill</text>
+    <text x="242" y="378" fill="#8294A6">project</text>
+    <text x="326" y="378" fill="#16324A" font-weight="700">api-test</text>
+    <text x="500" y="378" fill="#667D91">packages/api/.agents/skills/api-test</text>
+
+    <circle cx="61" cy="411" r="5" fill="#F3B74F"/>
+    <text x="78" y="416" fill="#8A5A08" font-weight="700">coexists</text>
+    <text x="175" y="416" fill="#8294A6">skill</text>
+    <text x="242" y="416" fill="#8294A6">user</text>
+    <text x="326" y="416" fill="#16324A" font-weight="700">deploy</text>
+    <text x="500" y="416" fill="#667D91">~/.agents/skills/deploy</text>
+
+    <circle cx="61" cy="449" r="5" fill="#47C7A3"/>
+    <text x="78" y="454" fill="#216A58" font-weight="700">effective</text>
+    <text x="175" y="454" fill="#8294A6">instruction</text>
+    <text x="242" y="454" fill="#8294A6">directory</text>
+    <text x="326" y="454" fill="#16324A" font-weight="700">AGENTS.override.md</text>
+    <text x="500" y="454" fill="#667D91">packages/api/AGENTS.override.md</text>
+
+    <circle cx="61" cy="487" r="5" fill="#8294A6"/>
+    <text x="78" y="492" fill="#52677A" font-weight="700">unknown</text>
+    <text x="175" y="492" fill="#8294A6">managed</text>
+    <text x="242" y="492" fill="#8294A6">system</text>
+    <text x="326" y="492" fill="#16324A" font-weight="700">bundled sources</text>
+    <text x="500" y="492" fill="#667D91">not observable from local files</text>
+  </g>
+
+  <text x="52" y="521" fill="#3156BF" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="700">schema v1 / documented states only / no files changed</text>
+</svg>

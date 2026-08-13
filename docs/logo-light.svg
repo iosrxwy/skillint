@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">skillint</title>
+  <desc id="desc">Three agent catalogs converge into one verified catalog.</desc>
+  <rect x="4" y="4" width="248" height="248" rx="54" fill="#FAF8F3" stroke="#DCE4F0" stroke-width="8"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M54 70h52c14 0 20 10 28 21l19 25" stroke="#3B66F0" stroke-width="14"/>
+    <path d="M54 128h79c11 0 16 0 27 0" stroke="#47C7A3" stroke-width="14"/>
+    <path d="M54 186h52c14 0 20-10 28-21l19-25" stroke="#8D7BEA" stroke-width="14"/>
+    <path d="M160 128h21" stroke="#16324A" stroke-width="14"/>
+    <path d="M178 130l15 15 29-37" stroke="#3B66F0" stroke-width="14"/>
+  </g>
+  <circle cx="160" cy="128" r="10" fill="#F37D68" stroke="#FAF8F3" stroke-width="5"/>
+</svg>

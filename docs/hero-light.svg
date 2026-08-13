@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Map three agent catalogs into one explainable view</title>
+  <desc id="desc">Cursor, Claude Code, and Codex skill sources flow into an agent-aware catalog map with explicit resolution states.</desc>
+  <rect width="1280" height="720" fill="#FAF8F3"/>
+  <circle cx="52" cy="56" r="100" fill="none" stroke="#C9D6FA" stroke-width="2"/>
+  <circle cx="1222" cy="680" r="86" fill="none" stroke="#BDE8DB" stroke-width="2"/>
+  <text x="64" y="70" fill="#16324A" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="24" font-weight="760">From scattered files to an explainable catalog</text>
+  <text x="64" y="101" fill="#667D91" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="15">Every state is grounded in documented agent discovery rules. Unknown behavior stays unknown.</text>
+
+  <g transform="translate(64 148)">
+    <text x="0" y="0" fill="#8294A6" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="700" letter-spacing="1.6">01 / SOURCES</text>
+    <g transform="translate(0 25)">
+      <rect width="286" height="120" rx="18" fill="#FFFFFF" stroke="#C8D5FA" stroke-width="2"/>
+      <rect x="20" y="20" width="40" height="40" rx="10" fill="#EDF1FE"/>
+      <path d="M31 33h18M31 40h12M31 47h16" stroke="#3B66F0" stroke-width="3" stroke-linecap="round"/>
+      <text x="76" y="39" fill="#16324A" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="17" font-weight="750">Cursor</text>
+      <text x="76" y="61" fill="#7890A5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11">.cursor / .agents / compat</text>
+      <rect x="20" y="83" width="246" height="18" rx="9" fill="#EDF1FE"/>
+      <rect x="20" y="83" width="165" height="18" rx="9" fill="#9AB0F4"/>
+    </g>
+    <g transform="translate(0 165)">
+      <rect width="286" height="120" rx="18" fill="#FFFFFF" stroke="#BFE9DB" stroke-width="2"/>
+      <rect x="20" y="20" width="40" height="40" rx="10" fill="#EAF8F4"/>
+      <path d="M31 33h18M31 40h12M31 47h16" stroke="#47C7A3" stroke-width="3" stroke-linecap="round"/>
+      <text x="76" y="39" fill="#16324A" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="17" font-weight="750">Claude Code</text>
+      <text x="76" y="61" fill="#7890A5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11">user / project / directory</text>
+      <rect x="20" y="83" width="246" height="18" rx="9" fill="#EAF8F4"/>
+      <rect x="20" y="83" width="204" height="18" rx="9" fill="#83D5BC"/>
+    </g>
+    <g transform="translate(0 305)">
+      <rect width="286" height="120" rx="18" fill="#FFFFFF" stroke="#DCD5F5" stroke-width="2"/>
+      <rect x="20" y="20" width="40" height="40" rx="10" fill="#F2EFFC"/>
+      <path d="M31 33h18M31 40h12M31 47h16" stroke="#8D7BEA" stroke-width="3" stroke-linecap="round"/>
+      <text x="76" y="39" fill="#16324A" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="17" font-weight="750">Codex</text>
+      <text x="76" y="61" fill="#7890A5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11">.agents / AGENTS.md chain</text>
+      <rect x="20" y="83" width="246" height="18" rx="9" fill="#F2EFFC"/>
+      <rect x="20" y="83" width="128" height="18" rx="9" fill="#B7AAE8"/>
+    </g>
+  </g>
+
+  <g transform="translate(402 148)">
+    <text x="0" y="0" fill="#8294A6" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="700" letter-spacing="1.6">02 / RESOLVE</text>
+    <rect x="0" y="25" width="294" height="425" rx="24" fill="#FFFFFF" stroke="#DCE4F0" stroke-width="2"/>
+    <g transform="translate(82 72)">
+      <circle cx="65" cy="65" r="64" fill="#EDF1FE"/>
+      <circle cx="65" cy="65" r="43" fill="#FFFFFF" stroke="#B8C7F7" stroke-width="2"/>
+      <path d="M35 42h24c7 0 10 5 14 10l8 13M35 65h46M35 88h24c7 0 10-5 14-10l8-13M81 65h16" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+      <path d="M35 42h24c7 0 10 5 14 10l8 13" stroke="#3B66F0"/>
+      <path d="M35 65h46" stroke="#47C7A3"/>
+      <path d="M35 88h24c7 0 10-5 14-10l8-13" stroke="#8D7BEA"/>
+      <path d="M81 65h16" stroke="#16324A"/>
+      <circle cx="81" cy="65" r="6" fill="#F37D68" stroke="#FFFFFF" stroke-width="3"/>
+    </g>
+    <text x="147" y="245" text-anchor="middle" fill="#16324A" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="22" font-weight="760">Agent adapter</text>
+    <text x="147" y="274" text-anchor="middle" fill="#667D91" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="14">scope / precedence / visibility</text>
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="700">
+      <rect x="28" y="312" width="110" height="34" rx="17" fill="#E8F8F3"/>
+      <circle cx="46" cy="329" r="4" fill="#47C7A3"/>
+      <text x="58" y="334" fill="#216A58">EFFECTIVE</text>
+      <rect x="156" y="312" width="110" height="34" rx="17" fill="#FFF4DD"/>
+      <circle cx="174" cy="329" r="4" fill="#F3B74F"/>
+      <text x="186" y="334" fill="#8A5A08">COEXISTS</text>
+      <rect x="28" y="362" width="110" height="34" rx="17" fill="#FDEBE7"/>
+      <circle cx="46" cy="379" r="4" fill="#F37D68"/>
+      <text x="58" y="384" fill="#A84635">SHADOWED</text>
+      <rect x="156" y="362" width="110" height="34" rx="17" fill="#EEF2F5"/>
+      <circle cx="174" cy="379" r="4" fill="#8294A6"/>
+      <text x="186" y="384" fill="#52677A">UNKNOWN</text>
+    </g>
+    <path d="M-50 237h50M294 237h50" stroke="#9CB3ED" stroke-width="3" stroke-linecap="round"/>
+    <path d="M-10 227l10 10-10 10M334 227l10 10-10 10" fill="none" stroke="#3B66F0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <g transform="translate(748 148)">
+    <text x="0" y="0" fill="#8294A6" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="700" letter-spacing="1.6">03 / EXPLAIN</text>
+    <rect x="0" y="25" width="468" height="425" rx="24" fill="#FFFFFF" stroke="#DCE4F0" stroke-width="2"/>
+    <text x="28" y="67" fill="#16324A" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="21" font-weight="760">Cursor catalog for packages/api</text>
+    <text x="28" y="93" fill="#7890A5" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">8 effective / 2 conditional / 1 unknown</text>
+    <path d="M28 116h412" stroke="#E5EAF1"/>
+
+    <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">
+      <rect x="28" y="140" width="412" height="58" rx="12" fill="#F8FBFA" stroke="#D7EEE7"/>
+      <circle cx="51" cy="169" r="6" fill="#47C7A3"/>
+      <text x="68" y="174" fill="#314C63" font-weight="700">deploy-web</text>
+      <text x="68" y="190" fill="#8294A6" font-size="10">project / .cursor/skills/deploy-web</text>
+      <rect x="330" y="155" width="88" height="28" rx="14" fill="#E8F8F3"/>
+      <text x="374" y="174" text-anchor="middle" fill="#216A58" font-weight="700">effective</text>
+
+      <rect x="28" y="212" width="412" height="58" rx="12" fill="#FFFCF5" stroke="#F4E6C5"/>
+      <circle cx="51" cy="241" r="6" fill="#F3B74F"/>
+      <text x="68" y="246" fill="#314C63" font-weight="700">code-review</text>
+      <text x="68" y="262" fill="#8294A6" font-size="10">shared + project / behavior documented</text>
+      <rect x="330" y="227" width="88" height="28" rx="14" fill="#FFF4DD"/>
+      <text x="374" y="246" text-anchor="middle" fill="#8A5A08" font-weight="700">coexists</text>
+
+      <rect x="28" y="284" width="412" height="58" rx="12" fill="#FAFAFC" stroke="#E2E5EC"/>
+      <circle cx="51" cy="313" r="6" fill="#8294A6"/>
+      <text x="68" y="318" fill="#314C63" font-weight="700">same-name priority</text>
+      <text x="68" y="334" fill="#8294A6" font-size="10">not specified by Cursor documentation</text>
+      <rect x="330" y="299" width="88" height="28" rx="14" fill="#EEF2F5"/>
+      <text x="374" y="318" text-anchor="middle" fill="#52677A" font-weight="700">unknown</text>
+    </g>
+    <rect x="28" y="370" width="412" height="52" rx="12" fill="#EDF1FE"/>
+    <text x="49" y="401" fill="#3156BF" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="700">No trigger prediction / no scanned files changed</text>
+  </g>
+</svg>
