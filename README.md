@@ -51,7 +51,7 @@ That catalog only works when it is **small, named, and described**. A workstatio
 - **Doctor** — duplicates, missing/short/first-person descriptions, oversized files, long AGENTS.md
 - **Prune plan** — ranked keep/drop suggestions; never mutates the filesystem
 - **Markdown report** — CI-friendly artifact for pull requests and maintainer review
-- **GitHub Action** — `uses: iosrxwy/skillint@v0.3.0` on any public repo
+- **GitHub Action** — `uses: iosrxwy/skillint@main` on any public repo
 - **JSON output** — every command supports `--json`
 
 ## Install
@@ -135,7 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: iosrxwy/skillint@v0.3.0
+      - uses: iosrxwy/skillint@main
         with:
           fail-on: error
 ```

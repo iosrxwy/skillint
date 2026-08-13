@@ -24,4 +24,4 @@ npx skillint prune --keep 12
 - Token estimate is `characters / 4`. Call it an estimate, not an exact tokenizer count.
 - After scanning, summarize: skill count, health score, metadata tokens, full-body tokens, always-on rule tokens.
 - Mention `.skillintignore` and `--ignore` when the user wants to skip vendor copies.
-- For CI, prefer `uses: iosrxwy/skillint@v0.3.0` or `node dist/cli.js doctor --fail-on error`.
+- For CI, prefer `uses: iosrxwy/skillint@main` or `node dist/cli.js doctor --fail-on error`.

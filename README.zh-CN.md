@@ -49,7 +49,7 @@
 - **Doctor**：重名、缺/过短/第一人称 description、体积过大、过长的 AGENTS.md
 - **精简建议**：按优先级给出保留 / 拿掉列表，不改动磁盘
 - **Markdown 报告**：适合放进 PR 和 CI 产物
-- **GitHub Action**：`uses: iosrxwy/skillint@v0.3.0`
+- **GitHub Action**：`uses: iosrxwy/skillint@main`
 - **JSON**：所有命令都支持 `--json`
 
 ## 安装
@@ -117,7 +117,7 @@ Token 是估算值，用来比较体积，不是各家官方 tokenizer，不能�
 ## GitHub Action
 
 ```yaml
-- uses: iosrxwy/skillint@v0.3.0
+- uses: iosrxwy/skillint@main
   with:
     fail-on: error
 ```

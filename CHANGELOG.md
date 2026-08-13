@@ -6,7 +6,7 @@
 - Group duplicate-name findings instead of repeating every copy
 - Detect short descriptions, first-person descriptions, and oversized AGENTS.md
 - Support `.skillintignore` and repeatable `--ignore`
-- Ship a composite GitHub Action: `uses: iosrxwy/skillint@v0.3.0`
+- Ship a composite GitHub Action: `uses: iosrxwy/skillint@main`
 - Add SECURITY.md and a short code of conduct
 - Cap noisy doctor/prune terminal output; full lists remain available via `--json`
 
