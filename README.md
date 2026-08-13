@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/logo.png" width="120" height="120" alt="skillint">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/logo.png" width="120" height="120" alt="skillint">
 </p>
 
 <h1 align="center">skillint</h1>
@@ -33,7 +33,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/social.jpg" alt="skillint — static analysis for AI agent skills" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/social.jpg" alt="skillint — static analysis for AI agent skills" width="720">
 </p>
 
 ---
@@ -50,7 +50,7 @@ That catalog only works when it is **small, named, and described**. A workstatio
 - fail silently when `description` is missing, so the skill never gets selected
 
 <p align="center">
-  <img src="docs/hero.jpg" alt="Bloated skill folders filtered down to one healthy SKILL.md" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/hero.jpg" alt="Bloated skill folders filtered down to one healthy SKILL.md" width="720">
 </p>
 
 `skillint` is the linter for that folder. It does not execute skills. It does not delete files. It reports what an agent would have to carry.
@@ -107,7 +107,7 @@ skillint doctor --fail-under 80   # fail CI when health drops below 80
 From a developer machine with a large local skill library:
 
 <p align="center">
-  <img src="docs/scan.svg" alt="skillint scan showing 1,553 skills and 3.3 million body tokens" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/scan.svg" alt="skillint scan showing 1,553 skills and 3.3 million body tokens" width="720">
 </p>
 
 `skillint doctor` on the same machine: **233 findings** (60 duplicate names, 152 oversized files, 20 missing descriptions).
