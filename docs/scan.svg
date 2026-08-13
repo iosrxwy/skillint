@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540" role="img" aria-label="skillint scan output">
+  <rect width="960" height="540" rx="18" fill="#070B14"/>
+  <rect x="18" y="18" width="924" height="504" rx="14" fill="#0B1220" stroke="#1E293B"/>
+  <circle cx="48" cy="48" r="6" fill="#F87171"/>
+  <circle cx="70" cy="48" r="6" fill="#FBBF24"/>
+  <circle cx="92" cy="48" r="6" fill="#34D399"/>
+  <text x="120" y="53" fill="#64748B" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13">skillint scan</text>
+  <text x="48" y="104" fill="#94A3B8" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="18">$</text>
+  <text x="70" y="104" fill="#E2E8F0" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="18">skillint scan</text>
+  <text x="48" y="150" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="16">6 roots · 1,553 skills · 10 rules</text>
+  <text x="48" y="186" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="16">health   0/100</text>
+  <text x="210" y="186" fill="#F87171" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="16">‘‘‘‘‘‘‘‘‘‘‘‘</text>
+  <text x="360" y="186" fill="#F87171" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="16">critical</text>
+  <text x="48" y="236" fill="#F8FAFC" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="16" font-weight="700">Context cost</text>
+  <text x="48" y="272" fill="#94A3B8" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">metadata (name + description):</text>
+  <text x="430" y="272" fill="#FBBF24" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">~68,792 tokens</text>
+  <text x="48" y="304" fill="#94A3B8" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">all bodies if fully loaded:</text>
+  <text x="430" y="304" fill="#F87171" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">~3,344,017 tokens</text>
+  <text x="48" y="336" fill="#94A3B8" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">always-on rules:</text>
+  <text x="430" y="336" fill="#64748B" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">~0 tokens</text>
+  <text x="48" y="386" fill="#F8FAFC" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="16" font-weight="700">By source</text>
+  <text x="48" y="422" fill="#2DD4BF" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">cursor-global</text>
+  <text x="280" y="422" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">1,102 files</text>
+  <text x="48" y="454" fill="#2DD4BF" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">agents-global</text>
+  <text x="280" y="454" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">  318 files</text>
+  <text x="48" y="486" fill="#2DD4BF" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">grok-global</text>
+  <text x="280" y="486" fill="#CBD5E1" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="15">   55 files</text>
+</svg>

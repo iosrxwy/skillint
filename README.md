@@ -11,9 +11,13 @@
   <a href="./README.ru.md">Русский</a>
 </p>
 
+<p align="center">
+  <img src="docs/logo.png" width="120" height="120" alt="skillint">
+</p>
+
 <h1 align="center">skillint</h1>
 
-<p align="center"><b>Static analysis for AI agent skills.</b></p>
+<p align="center"><b>eslint for <code>SKILL.md</code></b></p>
 
 <p align="center">
   Audit <code>SKILL.md</code>, <code>AGENTS.md</code>, and editor rules used by
@@ -28,6 +32,10 @@
   <a href="https://github.com/iosrxwy/skillint/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/skillint?style=social" alt="stars"></a>
 </p>
 
+<p align="center">
+  <img src="docs/social.jpg" alt="skillint — static analysis for AI agent skills" width="720">
+</p>
+
 ---
 
 ## Why this exists
@@ -40,6 +48,10 @@ That catalog only works when it is **small, named, and described**. A workstatio
 - hide the useful skill behind three near-identical copies
 - inject 10k-token bodies into a single turn
 - fail silently when `description` is missing, so the skill never gets selected
+
+<p align="center">
+  <img src="docs/hero.jpg" alt="Bloated skill folders filtered down to one healthy SKILL.md" width="720">
+</p>
 
 `skillint` is the linter for that folder. It does not execute skills. It does not delete files. It reports what an agent would have to carry.
 
@@ -62,21 +74,15 @@ Requires Node.js 18.18 or later.
 git clone https://github.com/iosrxwy/skillint.git
 cd skillint
 npm install
-npm run build
-node dist/cli.js scan
+npx skillint scan
 ```
 
-After a global link:
-
-```bash
-npm link
-skillint scan
-```
+`npm install` builds the CLI. After that, `npx skillint` works in the repo, or `npm link` puts `skillint` on your PATH.
 
 ## Quick start
 
 ```bash
-skillint scan                 # inventory + token budget
+skillint scan                 # inventory + token budget + health bar
 skillint doctor               # diagnostics
 skillint tokens               # compact numbers
 skillint prune --keep 12      # suggestions only
@@ -98,16 +104,9 @@ skillint doctor --json --fail-on error
 
 From a developer machine with a large local skill library:
 
-```text
-skillint scan
-
-6 roots · 1,553 skills · 10 rules
-health 0/100  critical
-
-Context cost
-  metadata (name + description):  ~68,792 tokens
-  all bodies if fully loaded:     ~3,344,017 tokens
-```
+<p align="center">
+  <img src="docs/scan.svg" alt="skillint scan showing 1,553 skills and 3.3 million body tokens" width="720">
+</p>
 
 `skillint doctor` on the same machine: **233 findings** (60 duplicate names, 152 oversized files, 20 missing descriptions).
 

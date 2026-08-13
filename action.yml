@@ -3,7 +3,7 @@ description: Audit agent skills and AGENTS.md for duplicates, missing metadata, 
 author: iosrxwy
 branding:
   icon: search
-  color: purple
+  color: green
 inputs:
   paths:
     description: Directories to scan. Defaults to the current project.

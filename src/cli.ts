@@ -7,7 +7,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { discover } from "./discover.js";
 import { doctor, healthScore, summarizeTokens } from "./doctor.js";
-import { compactFiles, formatDoctor, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
+import { compactFiles, formatDoctor, formatGithubSummary, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
 import { loadIgnoreFile } from "./ignore.js";
 import { planPrune } from "./prune.js";
 import { formatReport } from "./report.js";
@@ -18,7 +18,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.4.0";
+    return "0.5.0";
   }
 }
 
@@ -51,6 +51,12 @@ function collect(value: string, previous: string[]): string[] {
   return [...previous, value];
 }
 
+async function maybeGithubSummary(markdown: string): Promise<void> {
+  const file = process.env.GITHUB_STEP_SUMMARY;
+  if (!file) return;
+  await writeFile(file, markdown, { flag: "a" });
+}
+
 const program = new Command();
 
 program
@@ -81,18 +87,20 @@ withScanOptions(
   const result = await discover(await parseRoots(paths, opts));
   const summary = summarizeTokens(result.files);
   const findings = doctor(result.files);
+  const health = healthScore(result.files, findings);
   if (opts.json) {
     process.stdout.write(
       toJson({
         roots: result.roots,
         summary,
-        health: healthScore(result.files, findings),
+        health,
         files: compactFiles(result.files),
       }),
     );
-    return;
+  } else {
+    console.log(formatScan(result, summary, findings));
   }
-  console.log(formatScan(result, summary, findings));
+  await maybeGithubSummary(formatGithubSummary({ command: "scan", health, summary, findings }));
 });
 
 withScanOptions(
@@ -107,12 +115,15 @@ withScanOptions(
     ) => {
       const result = await discover(await parseRoots(paths, opts));
       const findings = doctor(result.files);
+      const health = healthScore(result.files, findings);
+      const summary = summarizeTokens(result.files);
       if (opts.json) {
-        process.stdout.write(toJson({ health: healthScore(result.files, findings), findings }));
+        process.stdout.write(toJson({ health, findings }));
       } else {
         const max = Number.parseInt(opts.max ?? "40", 10);
-        console.log(formatDoctor(findings, { max: Number.isFinite(max) ? max : 40 }));
+        console.log(formatDoctor(findings, { max: Number.isFinite(max) ? max : 40, health }));
       }
+      await maybeGithubSummary(formatGithubSummary({ command: "doctor", health, summary, findings }));
       const failOn = opts.failOn ?? "error";
       const errors = findings.some((item) => item.severity === "error");
       const warnings = findings.some((item) => item.severity === "warning" || item.severity === "error");

@@ -11,6 +11,10 @@
   <a href="./README.ru.md">Русский</a>
 </p>
 
+<p align="center">
+  <img src="docs/logo.png" width="96" height="96" alt="skillint">
+</p>
+
 <h1 align="center">skillint</h1>
 
 <p align="center"><b>Статический анализ skills для ИИ-агентов.</b></p>

@@ -209,6 +209,29 @@ Body
   });
 });
 
+describe("format", () => {
+  it("renders a health bar that fills with the score", async () => {
+    const { healthBar, formatGithubSummary } = await import("../src/format.js");
+    expect(healthBar(0, 10)).toContain("░");
+    expect(healthBar(100, 10)).toContain("█");
+    const summary = formatGithubSummary({
+      command: "scan",
+      health: { score: 72, label: "fair" },
+      summary: {
+        files: 4,
+        skills: 3,
+        rules: 1,
+        metaTokens: 10,
+        bodyTokens: 20,
+        alwaysOnTokens: 0,
+        bySource: {},
+      },
+    });
+    expect(summary).toContain("skillint scan");
+    expect(summary).toContain("72/100");
+  });
+});
+
 describe("report", () => {
   it("renders a markdown audit", async () => {
     const { formatReport } = await import("../src/report.js");

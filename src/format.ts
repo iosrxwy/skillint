@@ -17,13 +17,22 @@ function healthLabel(label: string): string {
   return pc.red(label);
 }
 
+export function healthBar(score: number, width = 12): string {
+  const clamped = Math.max(0, Math.min(100, score));
+  const filled = Math.round((clamped / 100) * width);
+  const bar = `${"█".repeat(filled)}${"░".repeat(width - filled)}`;
+  if (clamped >= 85) return pc.green(bar);
+  if (clamped >= 60) return pc.yellow(bar);
+  return pc.red(bar);
+}
+
 export function formatScan(result: ScanResult, summary: TokenSummary, findings: Finding[] = []): string {
   const health = healthScore(result.files, findings);
   const lines = [
     pc.bold("skillint scan"),
     "",
     `${plural(result.roots.length, "root")} · ${plural(summary.skills, "skill")} · ${plural(summary.rules, "rule")}`,
-    `health ${health.score}/100  ${healthLabel(health.label)}`,
+    `health ${String(health.score).padStart(3)}/100  ${healthBar(health.score)}  ${healthLabel(health.label)}`,
     "",
     pc.bold("Context cost"),
     `  metadata (name + description):  ~${n(summary.metaTokens)} tokens`,
@@ -55,7 +64,10 @@ export function formatScan(result: ScanResult, summary: TokenSummary, findings: 
   return lines.join("\n");
 }
 
-export function formatDoctor(findings: Finding[], options: { max?: number } = {}): string {
+export function formatDoctor(
+  findings: Finding[],
+  options: { max?: number; health?: { score: number; label: string } } = {},
+): string {
   const errors = findings.filter((item) => item.severity === "error").length;
   const warnings = findings.filter((item) => item.severity === "warning").length;
   const infos = findings.filter((item) => item.severity === "info").length;
@@ -64,8 +76,16 @@ export function formatDoctor(findings: Finding[], options: { max?: number } = {}
   const lines = [
     pc.bold("skillint doctor"),
     "",
-    `${pc.red(plural(errors, "error"))}  ${pc.yellow(plural(warnings, "warning"))}  ${pc.dim(plural(infos, "info"))}`,
   ];
+  if (options.health) {
+    lines.push(
+      `health ${String(options.health.score).padStart(3)}/100  ${healthBar(options.health.score)}  ${healthLabel(options.health.label)}`,
+      "",
+    );
+  }
+  lines.push(
+    `${pc.red(plural(errors, "error"))}  ${pc.yellow(plural(warnings, "warning"))}  ${pc.dim(plural(infos, "info"))}`,
+  );
 
   if (!findings.length) {
     lines.push("", pc.green("No issues found."));
@@ -150,6 +170,30 @@ function jsonReplacer(_key: string, value: unknown): unknown {
   }
   if (Array.isArray(value) || typeof value === "object") return value;
   return String(value);
+}
+
+export function formatGithubSummary(input: {
+  command: string;
+  health: { score: number; label: string };
+  summary?: TokenSummary;
+  findings?: Finding[];
+}): string {
+  const errors = input.findings?.filter((item) => item.severity === "error").length ?? 0;
+  const warnings = input.findings?.filter((item) => item.severity === "warning").length ?? 0;
+  const lines = [
+    `## skillint ${input.command}`,
+    "",
+    `Health **${input.health.score}/100** (${input.health.label})`,
+  ];
+  if (input.summary) {
+    lines.push(
+      "",
+      `| Skills | Rules | Meta tokens | Body tokens | Errors | Warnings |`,
+      `| ---: | ---: | ---: | ---: | ---: | ---: |`,
+      `| ${n(input.summary.skills)} | ${n(input.summary.rules)} | ${n(input.summary.metaTokens)} | ${n(input.summary.bodyTokens)} | ${n(errors)} | ${n(warnings)} |`,
+    );
+  }
+  return `${lines.join("\n")}\n`;
 }
 
 export function compactFiles(files: SkillFile[]) {

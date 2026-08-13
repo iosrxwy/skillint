@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 — 2026-08-13
+
+- Add a health bar to `scan` and `doctor`
+- Write a compact summary to GitHub Actions job summaries
+- Build from a git checkout on `npm install` so `npx skillint` works after clone
+- Add logo, social card, hero art, and a terminal screenshot for the README
+
 ## 0.4.0 — 2026-08-13
 
 - Discover Grok, Gemini, Copilot, OpenCode, Windsurf, Kiro, Cline, Continue, Antigravity, Factory, OpenClaw, Hermes, Qoder, CodeBuddy, Goose, Amp, Roo, Trae, Crush, Pi, and cc-switch skill folders

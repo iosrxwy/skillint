@@ -11,9 +11,13 @@
   <a href="./README.ru.md">Русский</a>
 </p>
 
+<p align="center">
+  <img src="docs/logo.png" width="120" height="120" alt="skillint">
+</p>
+
 <h1 align="center">skillint</h1>
 
-<p align="center"><b>AI Agent Skills 的静态分析工具。</b></p>
+<p align="center"><b>给 <code>SKILL.md</code> 用的 eslint</b></p>
 
 <p align="center">
   检查 Codex、Cursor、Claude Code、Grok、Gemini、Copilot 等工具使用的 <code>SKILL.md</code>、<code>AGENTS.md</code> 和编辑器规则。
@@ -24,6 +28,10 @@
   <a href="https://github.com/iosrxwy/skillint/actions/workflows/ci.yml"><img src="https://github.com/iosrxwy/skillint/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
   <a href="https://github.com/iosrxwy/skillint/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/skillint?style=social" alt="stars"></a>
+</p>
+
+<p align="center">
+  <img src="docs/social.jpg" alt="skillint — AI agent skills 静态分析" width="720">
 </p>
 
 ---
@@ -38,6 +46,10 @@
 - 有用的 skill 被三份近重复本挡住
 - 单次对话被 1 万 token 的正文打满
 - 缺 `description` 时静默失败，skill 永远不会被选中
+
+<p align="center">
+  <img src="docs/hero.jpg" alt="把臃肿的 skill 目录过滤成一份健康的 SKILL.md" width="720">
+</p>
 
 `skillint` 就是给这个目录做静态检查。它不执行 skill，也不删除文件，只报告 Agent 将要负担的成本。
 
@@ -60,19 +72,15 @@
 git clone https://github.com/iosrxwy/skillint.git
 cd skillint
 npm install
-npm run build
-node dist/cli.js scan
+npx skillint scan
 ```
 
-```bash
-npm link
-skillint scan
-```
+`npm install` 会编译 CLI。之后在仓库里可以直接 `npx skillint`，或 `npm link` 装到 PATH。
 
 ## 快速开始
 
 ```bash
-skillint scan                 # 数量 + token
+skillint scan                 # 数量 + token + 健康条
 skillint doctor               # 诊断
 skillint tokens               # 精简数字
 skillint prune --keep 12      # 只给建议
@@ -92,11 +100,9 @@ skillint doctor --json --fail-on error
 
 在一台装了大量 skills 的开发机上：
 
-```text
-6 roots · 1,553 skills · 10 rules
-metadata ~68,792 tokens
-all bodies ~3,344,017 tokens
-```
+<p align="center">
+  <img src="docs/scan.svg" alt="skillint scan：1,553 个 skills，正文约 334 万 token" width="720">
+</p>
 
 同一台机器跑 `doctor`：**233 个问题**（60 个重名、152 个过大、20 个缺 description）。
 
