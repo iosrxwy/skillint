@@ -1,0 +1,32 @@
+name: observatory
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: npm ci && npm run build
+      - name: Scan observatory repos
+        run: |
+          mapfile -t REPOS < docs/observatory-repos.txt
+          node dist/cli.js scan-remote "${REPOS[@]}" --markdown OBSERVATORY.md || true
+      - name: Commit if changed
+        run: |
+          if ! git diff --quiet OBSERVATORY.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add OBSERVATORY.md
+            git commit -m "Update the skill security observatory."
+            git push
+          fi

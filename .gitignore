@@ -6,4 +6,5 @@ coverage/
 .env
 .env.*
 skillint-report.md
+LAUNCH-PLAYBOOK.md
 

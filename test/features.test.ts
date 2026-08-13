@@ -152,6 +152,39 @@ Use it for sketch-to-render workflows.
   });
 });
 
+describe("roast", () => {
+  it("roasts hoarders and praises clean catalogs in both languages", async () => {
+    const { roastLines, renderRoastCard } = await import("../src/roast.js");
+    const hoarder = {
+      counts: { skills: 1658, junk: 22, risky: 67, oversized: 157, shareable: 44 },
+      bodyTokens: 3_424_092,
+      contextWindows: 27,
+      health: { score: 10, label: "critical" },
+      biggest: { name: "computer-use-agents", tokens: 16745 },
+    };
+    const zh = roastLines(hoarder, "zh");
+    expect(zh.join("\n")).toContain("1,658");
+    expect(zh.join("\n")).toContain("27");
+    expect(zh.join("\n")).toContain("computer-use-agents");
+    const en = roastLines(hoarder, "en");
+    expect(en.join("\n")).toContain("bold strategy");
+
+    const clean = {
+      counts: { skills: 12, junk: 0, risky: 0, oversized: 0, shareable: 0 },
+      bodyTokens: 9000,
+      contextWindows: 1,
+      health: { score: 96, label: "healthy" },
+    };
+    expect(roastLines(clean, "en").join("\n")).toContain("Nothing to roast");
+
+    const card = renderRoastCard(hoarder, "en");
+    expect(card).toContain("health 10/100");
+    expect(card).toContain("github.com/iosrxwy/skillint");
+    const evil = renderRoastCard({ ...hoarder, biggest: { name: "<script>", tokens: 9001 } }, "en");
+    expect(evil).not.toContain("<script>");
+  });
+});
+
 describe("badge and html report", () => {
   it("renders a score-colored badge", () => {
     const red = renderBadge(10);

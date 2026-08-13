@@ -23,6 +23,8 @@ npx skillint link
 npx skillint update
 npx skillint report --html
 npx skillint badge
+npx skillint scan-remote owner/repo
+npx skillint mcp
 ```
 
 ## Rules

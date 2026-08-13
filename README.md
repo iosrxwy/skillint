@@ -155,6 +155,32 @@ npx skillint ui -g
 
 Five tabs with live counts: **issues** (doctor findings), **audit** (security scan), **cleanup** (prune plan), **links** (cross-agent sharing), **largest** (token hogs). Navigate with `1-5` and `j`/`k`, press `c` to copy the suggested command for the selected row, `r` to rescan, `q` to quit. The UI is read-only and needs no extra dependencies — commands are copied to your clipboard, never executed.
 
+## Scan a repo before you install it
+
+Skills are instructions your agent will follow. Check a repository *before* `npx skills add`:
+
+```bash
+npx skillint scan-remote owner/repo
+```
+
+Shallow-clones to a cache, pattern-scans every `SKILL.md` (plus shell scripts and instruction files), and returns a verdict — `clean`, `caution`, or `risky` — with file:line receipts. Exit code 1 on risky, so it drops straight into CI. Nothing from the repo is ever executed.
+
+[`OBSERVATORY.md`](./OBSERVATORY.md) tracks popular public skill repos with this scanner and refreshes weekly via GitHub Actions.
+
+## Use it from your agent (MCP)
+
+`skillint mcp` runs a zero-dependency MCP server over stdio, so Claude Code, Cursor, or any MCP client can call skillint natively — ask "audit my skills" and the agent gets structured results instead of improvising grep:
+
+```json
+{
+  "mcpServers": {
+    "skillint": { "command": "npx", "args": ["-y", "skillint", "mcp"] }
+  }
+}
+```
+
+Tools exposed: `skill_checkup`, `skill_audit`, `skill_cleanup_plan`, and `scan_skill_repo` (pre-install repo vetting). All read-only; cleanup returns commands for the human to run.
+
 ## Security audit
 
 Skills are markdown you installed from the internet, and agents follow them. `audit` scans every installed skill for dangerous patterns — before an agent acts on one:
@@ -200,6 +226,18 @@ npx skillint fix --apply          # rewrite; originals go to the trash first
 ```
 
 `fix` recovers frontmatter written without `---` markers, normalizes sloppy delimiters, and drafts missing names (from the folder) and descriptions (from the first paragraph). The whole engine also *tolerates* sloppy delimiters when scanning, so scores reflect reality: on the machine this was built against, that tolerance alone revived 8 "dead" skills and raised the health score from 10 to 42.
+
+## Roast mode
+
+```bash
+npx skillint roast --card
+```
+
+> You installed 1,658 skills. Your agent doesn't lack skills — it lacks attention.
+> Loading everything would take ~27 full context windows. That's not a library, that's a mortgage for your agent.
+> 67 skills contain download-and-run commands or worse. Giving random markdown shell access — bold strategy.
+
+Read-only, localized (English and Chinese), and `--card` writes a shareable SVG scorecard. Post yours.
 
 ## HTML dashboard and badge
 
@@ -355,6 +393,14 @@ npm test
 npm run build
 node dist/cli.js --help
 ```
+
+## Star history
+
+If skillint told you something about your machine you didn't know, [a star](https://github.com/iosrxwy/skillint) is the best way to say thanks — it keeps the project going.
+
+<a href="https://star-history.com/#iosrxwy/skillint&Date">
+  <img src="https://api.star-history.com/svg?repos=iosrxwy/skillint&type=Date" alt="Star history chart" width="600">
+</a>
 
 ## License
 

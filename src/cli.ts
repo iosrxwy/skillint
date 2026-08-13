@@ -22,6 +22,10 @@ import { runTui } from "./tui.js";
 import { runWizard } from "./wizard.js";
 import { collapseDeletePaths } from "./prune.js";
 import { renderBadge } from "./badge.js";
+import { renderRoastCard, roastLines } from "./roast.js";
+import { detectLang, wizardCounts } from "./wizard.js";
+import { runMcpServer } from "./mcp.js";
+import { formatObservatory, formatRemoteText, scanRemoteRepos } from "./remote.js";
 import { applyFix, planFix } from "./fix.js";
 import { formatHtmlReport } from "./html.js";
 import {
@@ -41,7 +45,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.15.0";
+    return "0.16.0";
   }
 }
 
@@ -502,6 +506,79 @@ withScanOptions(program.command("fix").description("Repair skills with missing f
       console.log("To revert one: delete the new SKILL.md, then run `skillint restore`.");
     },
   );
+
+withScanOptions(program.command("roast").description("Roast your skills folder. Read-only, shareable, mildly rude."))
+  .option("--card [file]", "also write a shareable SVG card")
+  .action(
+    async (
+      paths: string[],
+      opts: { json?: boolean; card?: string | boolean; global?: boolean; project?: boolean; ignore?: string[] },
+    ) => {
+      const parsed = await parseRoots(paths, opts);
+      const result = await discover(parsed);
+      const findings = doctor(result.files, parsed.limits);
+      const [security, link] = await Promise.all([scanSecurity(result.files), resolveLinkPlan(result.files)]);
+      const summary = summarizeTokens(result.files);
+      const health = healthScore(result.files, findings);
+      const data = { result, findings, security, prune: planPrune(result.files), link, summary, health };
+      const counts = wizardCounts(data);
+      const biggestFile = [...result.files].sort((a, b) => b.bodyTokens - a.bodyTokens)[0];
+      const input = {
+        counts,
+        bodyTokens: summary.bodyTokens,
+        contextWindows: Math.max(1, Math.round(summary.bodyTokens / 128000)),
+        health,
+        biggest: biggestFile ? { name: biggestFile.name, tokens: biggestFile.bodyTokens } : undefined,
+      };
+      const lang = detectLang();
+      const lines = roastLines(input, lang);
+      if (opts.json) {
+        process.stdout.write(toJson({ ...input, lines }));
+        return;
+      }
+      console.log("");
+      for (const line of lines) console.log(`  ${line}`);
+      console.log("");
+      console.log(`  — skillint roast · https://github.com/iosrxwy/skillint`);
+      if (opts.card != null && opts.card !== false) {
+        const out = resolve(typeof opts.card === "string" ? opts.card : "skillint-roast.svg");
+        await writeFile(out, renderRoastCard(input, lang), "utf8");
+        console.log(`\n  card: ${out}`);
+      }
+    },
+  );
+
+program
+  .command("scan-remote <repos...>")
+  .description("Audit public skill repos BEFORE installing (owner/repo or local path). Nothing is executed.")
+  .option("--json", "print JSON")
+  .option("--markdown <file>", "write an observatory-style markdown table")
+  .option("--max <n>", "max findings per repo in text output", "10")
+  .action(async (repos: string[], opts: { json?: boolean; markdown?: string; max?: string }) => {
+    const max = parseInteger(opts.max ?? "10", "--max", { min: 1 });
+    const results = await scanRemoteRepos(repos);
+    if (opts.json) {
+      process.stdout.write(toJson(results));
+    } else {
+      for (const result of results) {
+        console.log(formatRemoteText(result, max));
+        console.log("");
+      }
+    }
+    if (opts.markdown) {
+      const out = resolve(opts.markdown);
+      await writeFile(out, formatObservatory(results, new Date().toISOString().slice(0, 10)), "utf8");
+      console.log(`wrote ${out}`);
+    }
+    if (results.some((result) => result.verdict === "risky")) process.exitCode = 1;
+  });
+
+program
+  .command("mcp")
+  .description("Run skillint as an MCP server (stdio) so agents can call it as a native tool.")
+  .action(async () => {
+    await runMcpServer();
+  });
 
 withScanOptions(program.command("badge").description("Write an SVG health badge for your README."))
   .option("-o, --out <file>", "output path", "skills-health.svg")

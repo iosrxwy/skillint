@@ -1,0 +1,3 @@
+anthropics/skills
+vercel-labs/agent-skills
+obra/superpowers

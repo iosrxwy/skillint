@@ -23,6 +23,9 @@ export {
 } from "./registry.js";
 export { applyFix, draftDescription, planFix, recoverBareHeader, sanitizeName } from "./fix.js";
 export { renderBadge } from "./badge.js";
+export { renderRoastCard, roastLines } from "./roast.js";
+export { formatObservatory, formatRemoteText, scanRemoteRepo, scanRemoteRepos } from "./remote.js";
+export { handleMcpRequest, runMcpServer } from "./mcp.js";
 export { formatHtmlReport } from "./html.js";
 export { applyLinkPlan, applyUpdates, checkUpdates, planLink, resolveLinkPlan } from "./manage.js";
 export { collapseDeletePaths, deleteTarget, isBackup, planPrune } from "./prune.js";

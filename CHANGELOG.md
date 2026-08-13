@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.16.0 — 2026-08-13
+
+- Add `skillint scan-remote <owner/repo>`: audit a public skill repository before installing it — shallow clone, pattern scan, verdict with file:line receipts, exit 1 on risky
+- Add the Skill Security Observatory: `OBSERVATORY.md` tracks popular skill repos and refreshes weekly via GitHub Actions
+- Add `skillint mcp`: a zero-dependency MCP stdio server exposing `skill_checkup`, `skill_audit`, `skill_cleanup_plan`, and `scan_skill_repo` to Claude Code, Cursor, and any MCP client
+- Add `skillint roast`: a localized, read-only roast of your skills folder with a shareable SVG card (`--card`)
+- Add GitHub repository topics and a star-history section for discoverability
+
 ## 0.15.0 — 2026-08-13
 
 - Add `skillint adopt`: fingerprint-match orphan skills against known public repos (Anthropic, Vercel, superpowers) and record their provenance

@@ -152,6 +152,32 @@ npx skillint ui -g
 
 五个标签页带实时计数：**issues**（诊断）、**audit**（安全扫描）、**cleanup**（清理计划）、**links**（跨 Agent 共享）、**largest**（token 大户）。`1-5` 切换、`j`/`k` 移动、`c` 复制选中行的建议命令、`r` 重新扫描、`q` 退出。界面只读、零额外依赖——命令只复制到剪贴板，绝不代替你执行。
 
+## 装之前先扫一眼仓库
+
+Skill 是 Agent 会照做的指令。`npx skills add` 之前先查一下这个仓库干不干净：
+
+```bash
+npx skillint scan-remote owner/repo
+```
+
+浅克隆到缓存、静态扫描每个 `SKILL.md`（外加 shell 脚本和说明文件），给出结论——`clean` / `caution` / `risky`——每条都带 文件:行号。risky 时退出码为 1，可以直接卡 CI。仓库内容绝不会被执行。
+
+[`OBSERVATORY.md`](./OBSERVATORY.md) 用这个扫描器持续追踪热门公开 skill 仓库，GitHub Actions 每周自动刷新。
+
+## 让 Agent 直接调用（MCP）
+
+`skillint mcp` 是零依赖的 MCP 服务器（stdio）。配置之后，Claude Code / Cursor 里说一句「审计我的 skills」，Agent 就会原生调用 skillint 拿到结构化结果，而不是现场编 grep：
+
+```json
+{
+  "mcpServers": {
+    "skillint": { "command": "npx", "args": ["-y", "skillint", "mcp"] }
+  }
+}
+```
+
+暴露的工具：`skill_checkup`（体检）、`skill_audit`（安全审计）、`skill_cleanup_plan`（清理计划）、`scan_skill_repo`（装前查仓库）。全部只读；清理只返回命令，由人来执行。
+
 ## 安全审计
 
 Skill 是你从网上装来的 markdown，而 Agent 会照着执行。`audit` 在 Agent 执行之前，静态扫描每一份已装 skill 里的危险模式：
@@ -197,6 +223,18 @@ npx skillint fix --apply          # 写入；原文件先进隔离区
 ```
 
 `fix` 能恢复没写 `---` 包裹的裸 frontmatter、归一化带尾随空格的分隔符、从文件夹名和正文起草缺失的 name/description。扫描引擎本身也已容错——仅这一项就让这台机器上 8 个「死 skill」复活，健康分从 10 涨到 42。
+
+## 毒舌模式
+
+```bash
+npx skillint roast --card
+```
+
+> 你装了 1,658 个 skill。你的 Agent 不缺技能，缺的是注意力。
+> 全部载入需要约 27 个完整上下文窗口。这不是技能库，这是给 Agent 准备的鹤岗房贷。
+> 67 个 skill 里藏着「下载并执行网上脚本」之类的操作。给陌生 markdown 开 shell 权限，勇气可嘉。
+
+只读、中英双语，`--card` 会生成一张可分享的战绩卡。欢迎晒图。
 
 ## HTML 仪表盘和徽章
 
@@ -299,6 +337,10 @@ Token 是**物理清单估算值**，用来比较体积；它既不是各家官�
 ```
 
 Schema 会提供编辑器自动补全，并抓出拼错的设置。可调阈值：`skillBodyTokens`（4000）、`ruleAlwaysOnTokens`（800）、`descriptionMax`（1024）、`descriptionMin`（40）、`agentsDocLines`（100）、`nameMax`（64）。
+
+## Star
+
+如果 skillint 让你看到了自己机器上不知道的事，[点个 star](https://github.com/iosrxwy/skillint) 是对项目最大的支持。
 
 ## License
 
