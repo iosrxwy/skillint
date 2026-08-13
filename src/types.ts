@@ -15,12 +15,15 @@ export interface SkillFile {
   bodyLines: number;
   metaTokens: number;
   bodyTokens: number;
+  bodyHash: string;
 }
 
 export type FindingSeverity = "error" | "warning" | "info";
 
 export type FindingCode =
   | "duplicate-name"
+  | "synced-copy"
+  | "duplicate-content"
   | "missing-name"
   | "missing-description"
   | "empty-body"

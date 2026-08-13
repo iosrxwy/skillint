@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0 — 2026-08-13
+
+- Scan catalogs in parallel and skip extra `stat` calls, so large skill libraries finish faster
+- Treat the same skill installed in Cursor and Claude as a synced copy (info), not a duplicate error
+- Warn when one catalog stores the same body under different names
+- Print GitHub workflow annotations from `doctor` / `scan` in Actions (and via `--annotate`)
+- Show scan duration; cap reads of huge files at 512KB
+- Let the GitHub Action take comma-separated `ignore` patterns
+
 ## 0.5.0 — 2026-08-13
 
 - Add a health bar to `scan` and `doctor`

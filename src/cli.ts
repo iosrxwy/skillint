@@ -7,6 +7,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { discover } from "./discover.js";
 import { doctor, healthScore, summarizeTokens } from "./doctor.js";
+import { formatGithubAnnotations, shouldAnnotate } from "./annotate.js";
 import { compactFiles, formatDoctor, formatGithubSummary, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
 import { loadIgnoreFile } from "./ignore.js";
 import { planPrune } from "./prune.js";
@@ -18,7 +19,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.5.0";
+    return "0.6.0";
   }
 }
 
@@ -44,7 +45,8 @@ function withScanOptions(command: Command): Command {
     .option("--json", "print JSON")
     .option("-g, --global", "include user-level dirs for Cursor, Claude, Codex, Grok, Gemini, Copilot, and others")
     .option("-p, --project", "include the current project")
-    .option("--ignore <pattern>", "ignore path pattern (repeatable)", collect, []);
+    .option("--ignore <pattern>", "ignore path pattern (repeatable)", collect, [])
+    .option("--annotate", "print GitHub workflow annotations");
 }
 
 function collect(value: string, previous: string[]): string[] {
@@ -55,6 +57,14 @@ async function maybeGithubSummary(markdown: string): Promise<void> {
   const file = process.env.GITHUB_STEP_SUMMARY;
   if (!file) return;
   await writeFile(file, markdown, { flag: "a" });
+}
+
+function writeAnnotations(findings: ReturnType<typeof doctor>, opts: { annotate?: boolean; json?: boolean }): void {
+  if (!shouldAnnotate(opts.annotate)) return;
+  const text = formatGithubAnnotations(findings);
+  if (!text) return;
+  const stream = opts.json ? process.stderr : process.stdout;
+  stream.write(`${text}\n`);
 }
 
 const program = new Command();
@@ -83,23 +93,27 @@ withScanOptions(
   program
     .command("scan", { isDefault: true })
     .description("Discover skills and rules, then show estimated context cost"),
-).action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[] }) => {
+).action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; annotate?: boolean }) => {
+  const started = Date.now();
   const result = await discover(await parseRoots(paths, opts));
   const summary = summarizeTokens(result.files);
   const findings = doctor(result.files);
   const health = healthScore(result.files, findings);
+  const elapsedMs = Date.now() - started;
   if (opts.json) {
     process.stdout.write(
       toJson({
         roots: result.roots,
         summary,
         health,
+        elapsedMs,
         files: compactFiles(result.files),
       }),
     );
   } else {
-    console.log(formatScan(result, summary, findings));
+    console.log(formatScan(result, summary, findings, elapsedMs));
   }
+  writeAnnotations(findings, opts);
   await maybeGithubSummary(formatGithubSummary({ command: "scan", health, summary, findings }));
 });
 
@@ -111,7 +125,7 @@ withScanOptions(
   .action(
     async (
       paths: string[],
-      opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; failOn?: string; max?: string },
+      opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; failOn?: string; max?: string; annotate?: boolean },
     ) => {
       const result = await discover(await parseRoots(paths, opts));
       const findings = doctor(result.files);
@@ -123,6 +137,7 @@ withScanOptions(
         const max = Number.parseInt(opts.max ?? "40", 10);
         console.log(formatDoctor(findings, { max: Number.isFinite(max) ? max : 40, health }));
       }
+      writeAnnotations(findings, opts);
       await maybeGithubSummary(formatGithubSummary({ command: "doctor", health, summary, findings }));
       const failOn = opts.failOn ?? "error";
       const errors = findings.some((item) => item.severity === "error");

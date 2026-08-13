@@ -13,6 +13,10 @@ inputs:
     description: Exit 1 when findings reach this severity (error or warning)
     required: false
     default: error
+  ignore:
+    description: Comma-separated path patterns to ignore
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -29,9 +33,17 @@ runs:
       env:
         SKILLINT_PATHS: ${{ inputs.paths }}
         SKILLINT_FAIL_ON: ${{ inputs.fail-on }}
+        SKILLINT_IGNORE: ${{ inputs.ignore }}
       run: |
+        IGNORE_ARGS=()
+        if [ -n "$SKILLINT_IGNORE" ]; then
+          IFS=',' read -ra PARTS <<< "$SKILLINT_IGNORE"
+          for part in "${PARTS[@]}"; do
+            IGNORE_ARGS+=(--ignore "$part")
+          done
+        fi
         if [ -n "$SKILLINT_PATHS" ]; then
-          node "$GITHUB_ACTION_PATH/dist/cli.js" doctor $SKILLINT_PATHS --fail-on "$SKILLINT_FAIL_ON"
+          node "$GITHUB_ACTION_PATH/dist/cli.js" doctor $SKILLINT_PATHS --fail-on "$SKILLINT_FAIL_ON" --annotate "${IGNORE_ARGS[@]}"
         else
-          node "$GITHUB_ACTION_PATH/dist/cli.js" doctor -p --fail-on "$SKILLINT_FAIL_ON"
+          node "$GITHUB_ACTION_PATH/dist/cli.js" doctor -p --fail-on "$SKILLINT_FAIL_ON" --annotate "${IGNORE_ARGS[@]}"
         fi

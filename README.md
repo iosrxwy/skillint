@@ -60,7 +60,7 @@ That catalog only works when it is **small, named, and described**. A workstatio
 - **Inventory** — discover skills and rules across Codex, Cursor, Claude Code, Grok, Gemini, Copilot, and project roots
 - **Health score** — 0–100 catalog score from doctor findings and catalog size
 - **Token budget** — estimate metadata cost vs full-body cost (`characters / 4`)
-- **Doctor** — duplicates, missing/short/first-person descriptions, oversized files, long AGENTS.md
+- **Doctor** — duplicates, missing/short/first-person descriptions, oversized files, long AGENTS.md; copies across Cursor/Claude/Grok are info, not errors
 - **Prune plan** — ranked keep/drop suggestions; never mutates the filesystem
 - **Markdown report** — CI-friendly artifact for pull requests and maintainer review
 - **GitHub Action** — `uses: iosrxwy/skillint@main` on any public repo
@@ -147,6 +147,8 @@ jobs:
         with:
           fail-on: error
 ```
+
+Findings show up as pull request annotations. Copies of the same skill across Cursor, Claude, Grok, and other agents are reported as info (`synced-copy`), not as CI-failing duplicates.
 
 ## Ignore patterns
 

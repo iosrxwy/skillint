@@ -26,7 +26,12 @@ export function healthBar(score: number, width = 12): string {
   return pc.red(bar);
 }
 
-export function formatScan(result: ScanResult, summary: TokenSummary, findings: Finding[] = []): string {
+export function formatScan(
+  result: ScanResult,
+  summary: TokenSummary,
+  findings: Finding[] = [],
+  elapsedMs?: number,
+): string {
   const health = healthScore(result.files, findings);
   const lines = [
     pc.bold("skillint scan"),
@@ -60,8 +65,16 @@ export function formatScan(result: ScanResult, summary: TokenSummary, findings: 
   if (findings.length) {
     lines.push("", pc.dim(`Run \`skillint doctor\` for ${n(findings.length)} diagnostic details.`));
   }
+  if (elapsedMs != null) {
+    lines.push("", pc.dim(`scanned in ${formatDuration(elapsedMs)}`));
+  }
 
   return lines.join("\n");
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${Math.max(1, Math.round(ms))}ms`;
+  return `${(ms / 1000).toFixed(2)}s`;
 }
 
 export function formatDoctor(
@@ -207,5 +220,6 @@ export function compactFiles(files: SkillFile[]) {
     metaTokens: file.metaTokens,
     bodyTokens: file.bodyTokens,
     bodyLines: file.bodyLines,
+    bodyHash: file.bodyHash,
   }));
 }

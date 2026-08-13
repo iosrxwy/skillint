@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
-import { readdir, readFile, realpath, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { open, readdir, readFile, realpath, stat } from "node:fs/promises";
 import { asBoolean, asString, estimateTokens, parseFrontmatter } from "./frontmatter.js";
 import { isIgnored } from "./ignore.js";
 import type { Kind, ScanResult, SkillFile, Source } from "./types.js";
@@ -174,6 +175,30 @@ async function exists(path: string): Promise<boolean> {
 }
 
 const SKIP_DIRS = new Set(["node_modules", ".git", "dist", "coverage", ".next", "vendor"]);
+const MAX_READ_BYTES = 512 * 1024;
+const READ_CONCURRENCY = 32;
+
+async function mapPool<T, R>(items: T[], concurrency: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  if (items.length === 0) return [];
+  const out: R[] = new Array(items.length);
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (true) {
+      const index = next;
+      next += 1;
+      if (index >= items.length) return;
+      out[index] = await fn(items[index]);
+    }
+  }
+  const workers = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workers }, () => worker()));
+  return out;
+}
+
+function hashBody(text: string): string {
+  if (!text) return "";
+  return createHash("sha256").update(text).digest("hex").slice(0, 16);
+}
 
 async function walkFiles(root: string, source: Source, cwd: string): Promise<string[]> {
   const info = await stat(root).catch(() => null);
@@ -207,13 +232,15 @@ async function walkFiles(root: string, source: Source, cwd: string): Promise<str
     for (const entry of entries) {
       if (SKIP_DIRS.has(entry.name)) continue;
       const full = join(dir, entry.name);
-      const info = await stat(full).catch(() => null);
-      if (!info) continue;
-      if (info.isDirectory()) {
-        await walk(full);
-      } else if (info.isFile()) {
-        out.push(full);
+      if (entry.isSymbolicLink()) {
+        const target = await stat(full).catch(() => null);
+        if (!target) continue;
+        if (target.isDirectory()) await walk(full);
+        else if (target.isFile()) out.push(full);
+        continue;
       }
+      if (entry.isDirectory()) await walk(full);
+      else if (entry.isFile()) out.push(full);
     }
   }
 
@@ -232,19 +259,34 @@ function inferName(filePath: string, kind: Kind, data: Record<string, unknown>):
   return basename(filePath).replace(/\.(mdc|md)$/i, "");
 }
 
+async function readSkillText(filePath: string, size: number): Promise<{ raw: string; truncated: boolean }> {
+  if (size <= MAX_READ_BYTES) {
+    return { raw: await readFile(filePath, "utf8"), truncated: false };
+  }
+  const handle = await open(filePath, "r");
+  try {
+    const buffer = Buffer.alloc(MAX_READ_BYTES);
+    const { bytesRead } = await handle.read(buffer, 0, MAX_READ_BYTES, 0);
+    return { raw: buffer.subarray(0, bytesRead).toString("utf8"), truncated: true };
+  } finally {
+    await handle.close();
+  }
+}
+
 async function toSkillFile(
   filePath: string,
   kind: Kind,
   source: Source,
 ): Promise<SkillFile> {
-  const raw = await readFile(filePath, "utf8");
   const info = await stat(filePath);
+  const { raw, truncated } = await readSkillText(filePath, info.size);
   const { data, body } = parseFrontmatter(raw);
   const name = inferName(filePath, kind, data);
   const description = asString(data.description);
   const alwaysApply = asBoolean(data.alwaysApply) || asBoolean(data["always-apply"]);
   const metaText = `${name}\n${description}`;
   const trimmedBody = body.trim();
+  const estimatedFromSize = Math.ceil(info.size / 4);
 
   return {
     path: filePath,
@@ -255,10 +297,11 @@ async function toSkillFile(
     alwaysApply,
     bytes: info.size,
     mtimeMs: info.mtimeMs,
-    bodyChars: trimmedBody.length,
+    bodyChars: truncated ? info.size : trimmedBody.length,
     bodyLines: raw.split(/\r?\n/).length,
     metaTokens: estimateTokens(metaText),
-    bodyTokens: estimateTokens(body),
+    bodyTokens: truncated ? Math.max(estimateTokens(body), estimatedFromSize) : estimateTokens(body),
+    bodyHash: hashBody(trimmedBody),
   };
 }
 
@@ -277,27 +320,46 @@ export async function discover(options: DiscoverOptions = {}): Promise<ScanResul
 
   const ignore = options.ignore ?? [];
   const seenRoots = new Set<string>();
-  const roots: string[] = [];
-  const files: SkillFile[] = [];
-  const seenFiles = new Set<string>();
-
-  for (const { root, source } of candidates) {
-    if (seenRoots.has(root)) continue;
-    seenRoots.add(root);
-    if (!(await exists(root))) continue;
-    roots.push(root);
-
-    const paths = await walkFiles(root, source, cwd);
-    for (const filePath of paths) {
-      if (seenFiles.has(filePath)) continue;
-      if (isIgnored(filePath, ignore)) continue;
-      const kind = classify(filePath, root, source);
-      if (!kind) continue;
-      seenFiles.add(filePath);
-      files.push(await toSkillFile(filePath, kind, source));
-    }
+  const unique: Array<{ root: string; source: Source }> = [];
+  for (const candidate of candidates) {
+    if (seenRoots.has(candidate.root)) continue;
+    seenRoots.add(candidate.root);
+    unique.push(candidate);
   }
 
+  const live = (
+    await Promise.all(
+      unique.map(async (candidate) => ({
+        ...candidate,
+        ok: await exists(candidate.root),
+      })),
+    )
+  ).filter((candidate) => candidate.ok);
+
+  const found: Array<{ filePath: string; kind: Kind; source: Source }> = [];
+  await Promise.all(
+    live.map(async ({ root, source }) => {
+      const paths = await walkFiles(root, source, cwd);
+      for (const filePath of paths) {
+        if (isIgnored(filePath, ignore)) continue;
+        const kind = classify(filePath, root, source);
+        if (!kind) continue;
+        found.push({ filePath, kind, source });
+      }
+    }),
+  );
+
+  const seenFiles = new Set<string>();
+  const pending: Array<{ filePath: string; kind: Kind; source: Source }> = [];
+  for (const item of found) {
+    if (seenFiles.has(item.filePath)) continue;
+    seenFiles.add(item.filePath);
+    pending.push(item);
+  }
+
+  const files = await mapPool(pending, READ_CONCURRENCY, (item) =>
+    toSkillFile(item.filePath, item.kind, item.source),
+  );
   files.sort((a, b) => a.path.localeCompare(b.path));
-  return { files, roots };
+  return { files, roots: live.map((item) => item.root).sort((a, b) => a.localeCompare(b)) };
 }

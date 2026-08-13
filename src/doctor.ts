@@ -21,6 +21,11 @@ const AGENT_DOCS = new Set([
   "kiro.md",
 ]);
 
+export function sourceFamily(source: string): string {
+  if (source === "project-root" || source === "custom") return source;
+  return source.replace(/-(global|project)$/, "");
+}
+
 export function summarizeTokens(files: SkillFile[]): TokenSummary {
   const bySource: TokenSummary["bySource"] = {};
   const summary: TokenSummary = {
@@ -170,13 +175,63 @@ export function doctor(files: SkillFile[]): Finding[] {
 
   for (const [name, list] of byName) {
     if (list.length < 2) continue;
-    findings.push({
-      code: "duplicate-name",
-      severity: "error",
-      message: `Duplicate name "${name}" found ${list.length} times`,
-      path: list[0].path,
-      extra: list.map((item) => item.path).join(", "),
-    });
+    const byFamily = new Map<string, SkillFile[]>();
+    for (const file of list) {
+      const family = sourceFamily(file.source);
+      const group = byFamily.get(family) ?? [];
+      group.push(file);
+      byFamily.set(family, group);
+    }
+    for (const [family, group] of byFamily) {
+      if (group.length < 2) continue;
+      findings.push({
+        code: "duplicate-name",
+        severity: "error",
+        message: `Duplicate name "${name}" found ${group.length} times in ${family}`,
+        path: group[0].path,
+        extra: group.map((item) => item.path).join(", "),
+      });
+    }
+    if (byFamily.size >= 2) {
+      const families = [...byFamily.keys()].sort();
+      findings.push({
+        code: "synced-copy",
+        severity: "info",
+        message: `Name "${name}" is installed in ${families.length} agent catalogs (${families.join(", ")})`,
+        path: list[0].path,
+        extra: list.map((item) => item.path).join(", "),
+      });
+    }
+  }
+
+  const byHash = new Map<string, SkillFile[]>();
+  for (const file of files) {
+    if (!file.bodyHash) continue;
+    const list = byHash.get(file.bodyHash) ?? [];
+    list.push(file);
+    byHash.set(file.bodyHash, list);
+  }
+  for (const group of byHash.values()) {
+    if (group.length < 2) continue;
+    const byFamily = new Map<string, SkillFile[]>();
+    for (const file of group) {
+      const family = sourceFamily(file.source);
+      const list = byFamily.get(family) ?? [];
+      list.push(file);
+      byFamily.set(family, list);
+    }
+    for (const [family, copies] of byFamily) {
+      if (copies.length < 2) continue;
+      const names = [...new Set(copies.map((item) => item.name.toLowerCase()))];
+      if (names.length < 2) continue;
+      findings.push({
+        code: "duplicate-content",
+        severity: "warning",
+        message: `Same body stored under ${names.length} names in ${family}`,
+        path: copies[0].path,
+        extra: copies.map((item) => item.path).join(", "),
+      });
+    }
   }
 
   const rank = { error: 0, warning: 1, info: 2 };

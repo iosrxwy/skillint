@@ -2,10 +2,12 @@ import { mkdir, mkdtemp, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { formatGithubAnnotations } from "../src/annotate.js";
 import { discover } from "../src/discover.js";
 import { doctor, healthScore, summarizeTokens } from "../src/doctor.js";
 import { parseFrontmatter } from "../src/frontmatter.js";
 import { planPrune } from "../src/prune.js";
+import type { SkillFile } from "../src/types.js";
 
 async function fixtureRoot(): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), "skillint-"));
@@ -207,6 +209,81 @@ Body
     const result = await discover({ home, cwd: home, global: true, project: false });
     expect(result.files.some((file) => file.source === "grok-global" && file.name === "linked-skill")).toBe(true);
   });
+
+  it("treats the same skill in two agent catalogs as a synced copy, not an error", () => {
+    const files: SkillFile[] = [
+      {
+        path: "/cursor/demo/SKILL.md",
+        kind: "skill",
+        source: "cursor-global",
+        name: "demo",
+        description: "A portable agent skill used to verify cross-catalog copies.",
+        alwaysApply: false,
+        bytes: 120,
+        mtimeMs: 1,
+        bodyChars: 20,
+        bodyLines: 8,
+        metaTokens: 12,
+        bodyTokens: 20,
+        bodyHash: "aaaa",
+      },
+      {
+        path: "/claude/demo/SKILL.md",
+        kind: "skill",
+        source: "claude-global",
+        name: "demo",
+        description: "A portable agent skill used to verify cross-catalog copies.",
+        alwaysApply: false,
+        bytes: 120,
+        mtimeMs: 1,
+        bodyChars: 20,
+        bodyLines: 8,
+        metaTokens: 12,
+        bodyTokens: 20,
+        bodyHash: "aaaa",
+      },
+    ];
+    const findings = doctor(files);
+    expect(findings.some((item) => item.code === "duplicate-name")).toBe(false);
+    expect(findings.some((item) => item.code === "synced-copy")).toBe(true);
+    expect(healthScore(files, findings).score).toBe(100);
+  });
+
+  it("flags identical bodies stored under different names in the same catalog", () => {
+    const files: SkillFile[] = [
+      {
+        path: "/custom/one/SKILL.md",
+        kind: "skill",
+        source: "custom",
+        name: "one",
+        description: "A portable agent skill used to verify duplicate content detection.",
+        alwaysApply: false,
+        bytes: 120,
+        mtimeMs: 1,
+        bodyChars: 20,
+        bodyLines: 8,
+        metaTokens: 12,
+        bodyTokens: 20,
+        bodyHash: "bbbb",
+      },
+      {
+        path: "/custom/two/SKILL.md",
+        kind: "skill",
+        source: "custom",
+        name: "two",
+        description: "A portable agent skill used to verify duplicate content detection.",
+        alwaysApply: false,
+        bytes: 120,
+        mtimeMs: 1,
+        bodyChars: 20,
+        bodyLines: 8,
+        metaTokens: 12,
+        bodyTokens: 20,
+        bodyHash: "bbbb",
+      },
+    ];
+    expect(doctor(files).some((item) => item.code === "duplicate-content")).toBe(true);
+  });
 });
 
 describe("format", () => {
@@ -229,6 +306,28 @@ describe("format", () => {
     });
     expect(summary).toContain("skillint scan");
     expect(summary).toContain("72/100");
+  });
+
+  it("emits GitHub workflow annotations for errors and warnings", () => {
+    const text = formatGithubAnnotations(
+      [
+        {
+          code: "missing-name",
+          severity: "error",
+          message: "Skill is missing a name",
+          path: "/repo/skills/broken/SKILL.md",
+        },
+        {
+          code: "synced-copy",
+          severity: "info",
+          message: "Name demo is installed in 2 agent catalogs",
+          path: "/repo/skills/demo/SKILL.md",
+        },
+      ],
+      "/repo",
+    );
+    expect(text).toContain("::error file=skills/broken/SKILL.md,title=missing-name::Skill is missing a name");
+    expect(text).not.toContain("synced-copy");
   });
 });
 
