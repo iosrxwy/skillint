@@ -55,7 +55,8 @@ describe("skill manager", () => {
     const plan = await resolveLinkPlan(result.files);
     expect(plan.actions.some((item) => item.linkFamily === "grok" && item.status === "link")).toBe(true);
     expect(plan.actions.some((item) => item.linkFamily === "cursor" && item.status === "conflict")).toBe(true);
-    await applyLinkPlan(plan);
+    const applied = await applyLinkPlan(plan, { home });
+    expect(applied.batchDir).toContain(home);
     const { realpath } = await import("node:fs/promises");
     expect(await realpath(grok)).toBe(await realpath(canonical));
     const cursorSkill = await import("node:fs/promises").then((fs) => fs.readFile(join(cursor, "SKILL.md"), "utf8"));

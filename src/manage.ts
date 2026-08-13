@@ -1,10 +1,11 @@
 import { execFile } from "node:child_process";
-import { lstat, readFile, realpath, rm, symlink } from "node:fs/promises";
+import { lstat, readFile, realpath, symlink } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { promisify } from "node:util";
 import { sourceFamily } from "./doctor.js";
 import { deleteTarget, isBackup } from "./prune.js";
+import { quarantine } from "./trash.js";
 import type { LinkAction, LinkPlan, SkillFile, UpdateCheck } from "./types.js";
 
 const execFileAsync = promisify(execFile);
@@ -97,9 +98,13 @@ export async function resolveLinkPlan(files: SkillFile[]): Promise<LinkPlan> {
   return plan;
 }
 
-export async function applyLinkPlan(plan: LinkPlan): Promise<{ linked: number; skipped: number }> {
+export async function applyLinkPlan(
+  plan: LinkPlan,
+  options: { home?: string } = {},
+): Promise<{ linked: number; skipped: number; batchDir?: string }> {
   let linked = 0;
   let skipped = 0;
+  const actionable: Array<{ action: LinkAction; canonicalReal: string }> = [];
   for (const action of plan.actions) {
     if (action.status === "already-linked" || action.status === "conflict") {
       skipped += 1;
@@ -114,11 +119,24 @@ export async function applyLinkPlan(plan: LinkPlan): Promise<{ linked: number; s
         continue;
       }
     }
-    await rm(action.linkPath, { recursive: true, force: true });
+    actionable.push({ action, canonicalReal });
+  }
+  if (actionable.length === 0) return { linked, skipped };
+
+  const { batchDir, items } = await quarantine(
+    actionable.map((entry) => entry.action.linkPath),
+    { home: options.home },
+  );
+  const moved = new Set(items.map((item) => item.from));
+  for (const { action, canonicalReal } of actionable) {
+    if (!moved.has(action.linkPath)) {
+      skipped += 1;
+      continue;
+    }
     await symlink(canonicalReal, action.linkPath);
     linked += 1;
   }
-  return { linked, skipped };
+  return { linked, skipped, batchDir };
 }
 
 async function git(cwd: string, args: string[]): Promise<{ ok: boolean; stdout: string }> {

@@ -27,7 +27,7 @@ npx skillint update
 - Prefer `npx skillint` so the user does not need a global install.
 - Use `scan` for a cross-agent physical inventory and `map --agent ...` for one agent's documented catalog resolution.
 - Never claim `map` predicts whether a model will trigger a skill; preserve `conditional` and `unknown` results.
-- `prune` prints a cleanup plan with `rm` commands. Never delete skill files unless the user explicitly asks.
+- Cleanup is quarantine-based: `prune --apply` and `trash` move items to ~/.skillint/trash; `restore` undoes the last batch. Never use raw `rm` on skills.
 - Identical copies in Cursor, Claude, Codex, and Grok must not be deleted; use `skillint link` to share one canonical copy.
 - `link --apply` and `update --apply` are the only mutating manager commands. Default is dry-run.
 - Report duplicate names, missing descriptions, and oversized bodies first.

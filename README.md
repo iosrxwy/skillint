@@ -69,7 +69,7 @@ Coding agents can discover instructions from many global and project directories
   <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/hero-light.svg" alt="Cursor, Claude Code, and Codex catalogs resolved into explainable states" width="720">
 </p>
 
-`skillint` turns those directories into an actionable audit: inventory, diagnostics, a 0–100 health score, estimated size, and a cleanup plan with `rm` commands. It never deletes files itself.
+`skillint` turns those directories into an actionable audit: inventory, diagnostics, a 0–100 health score, estimated size, and an undoable cleanup plan. It never deletes files — cleanup means quarantine plus `skillint restore`.
 
 ## Install
 
@@ -96,8 +96,9 @@ npx skillint audit                # security scan: curl|bash, leaked keys, injec
 npx skillint ui                   # interactive terminal UI over everything
 npx skillint init code-review     # scaffold a SKILL.md that passes doctor
 npx skillint tokens               # compact estimates
-npx skillint prune                # cleanup plan with rm commands
-npx skillint prune --script       # reviewable shell script of safe deletes
+npx skillint prune                # cleanup plan (safe items -> undoable trash)
+npx skillint prune --apply        # move all safe items to ~/.skillint/trash
+npx skillint restore              # undo the last trash batch
 npx skillint link                 # share identical copies across agents
 npx skillint update               # check git-backed skills for upstream updates
 npx skillint report --out out.md  # Markdown audit
@@ -113,21 +114,25 @@ npx skillint doctor --json --fail-on error
 npx skillint doctor --fail-under 80   # fail CI when health drops below 80
 ```
 
-Audit commands never mutate or delete scanned skill files. `report` creates only the requested report, and `init` never overwrites an existing `SKILL.md`. `link --apply` and `update --apply` are explicit write operations.
+Audit commands never mutate or delete scanned skill files. `report` creates only the requested report, and `init` never overwrites an existing `SKILL.md`. `prune --apply`, `trash`, `restore`, `link --apply`, and `update --apply` are explicit write operations.
 
-## Cleanup
+## Cleanup — no `rm`, ever
 
-`prune` deletes junk inside one catalog. It does **not** delete the same skill installed in Cursor, Claude, Codex, and Grok — each agent only reads its own directory.
+skillint never deletes anything. Cleanup moves items into a quarantine at `~/.skillint/trash/<timestamp>/` with a manifest, and `skillint restore` moves the last batch back:
 
 ```bash
-npx skillint prune -g
-npx skillint prune -g --script > skillint-prune.sh
+npx skillint prune -g            # plan: what to trash and why
+npx skillint prune -g --apply    # move all safe items to the trash
+npx skillint restore             # changed your mind? undo the batch
+npx skillint trash <path...>     # trash specific items by hand
 ```
 
 | Bucket | Meaning |
 | --- | --- |
-| **safe** | Backups, nested copies, same-catalog duplicates. `rm` commands are printed. |
-| **review** | Oversized or broken metadata. Trim or fix; commands are commented out. |
+| **safe** | Backups, nested copies, same-catalog duplicates. Trashed by `--apply`. |
+| **review** | Oversized or broken metadata. Trim or fix; never touched by `--apply`. |
+
+`prune` only targets junk inside one catalog. It does **not** touch the same skill installed across Cursor, Claude, Codex, and Grok — each agent reads its own directory; share those with `skillint link` instead.
 
 ## Interactive UI
 

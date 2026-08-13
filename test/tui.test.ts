@@ -65,13 +65,15 @@ function fixture(): TuiData {
 }
 
 describe("tui rows", () => {
-  it("builds rows for every tab with copyable commands", () => {
+  it("builds rows for every tab with safe copyable commands", () => {
     const data = fixture();
     expect(tabCounts(data)).toEqual([2, 1, 1, 1, 2]);
     const cleanup = buildRows("cleanup", data);
-    expect(cleanup[0].copy).toBe("rm -rf '/home/.cursor/skills/alpha'");
+    expect(cleanup[0].copy).toBe("skillint trash '/home/.cursor/skills/alpha'");
     const links = buildRows("links", data);
+    expect(links[0].copy).toContain("skillint trash '/home/.cursor/skills/alpha'");
     expect(links[0].copy).toContain("ln -s '/home/.agents/skills/alpha'");
+    expect(JSON.stringify(buildRows("cleanup", data))).not.toContain("rm -rf");
     const audit = buildRows("audit", data);
     expect(audit[0].detail[0]).toBe(`${data.security[0].path}:12`);
   });
@@ -100,9 +102,10 @@ describe("tui rendering", () => {
     const data = fixture();
     const frame = renderFrame(data, initialState(), { rows: 24, cols: 100 });
     expect(frame).toContain("skillint ui");
-    expect(frame).toContain("health 42/100 poor");
+    expect(frame).toContain("42/100 poor");
     expect(frame).toContain("issues (2)");
-    expect(frame).toContain("q quit");
+    expect(frame).toContain("detail");
+    expect(frame).toContain("quit");
     expect(frame.split("\n").length).toBeLessThanOrEqual(24);
   });
 

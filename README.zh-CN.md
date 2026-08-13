@@ -67,7 +67,7 @@ npx skillint
   <img src="docs/hero-light.svg" alt="把 Cursor、Claude Code 和 Codex 目录解析成可解释状态" width="720">
 </p>
 
-`skillint` 把这些目录整理成可执行的审计结果：清单、诊断、0–100 健康分、体量估算，以及带 `rm` 命令的清理计划。它自己不会删文件。
+`skillint` 把这些目录整理成可执行的审计结果：清单、诊断、0–100 健康分、体量估算，以及**可一键撤销**的清理计划。它从不删文件——清理即隔离，`skillint restore` 随时反悔。
 
 ## 安装
 
@@ -94,8 +94,10 @@ npx skillint audit                # 安全扫描：curl|bash、泄露密钥、�
 npx skillint ui                   # 交互式终端界面，覆盖全部功能
 npx skillint init code-review     # 生成一份能直接通过 doctor 的 SKILL.md
 npx skillint tokens               # 精简估算
-npx skillint prune                # 清理计划，带 rm 命令
-npx skillint prune --script       # 只输出可审阅的安全删除脚本
+npx skillint prune                # 清理计划（安全项进可撤销的隔离区）
+npx skillint prune --apply        # 把全部安全项移入 ~/.skillint/trash
+npx skillint restore              # 一键撤销上一批
+
 npx skillint link                 # 跨 Agent 共享同一份 skill
 npx skillint update               # 检查有 git 远程的 skill 能否更新
 npx skillint report --out out.md  # Markdown 报告
@@ -109,21 +111,25 @@ npx skillint doctor --json --fail-on error
 npx skillint doctor --fail-under 80   # 健康分低于 80 时让 CI 失败
 ```
 
-审计命令不会修改或删除被扫描的 skill。`report` 只创建指定的报告，`init` 也绝不会覆盖已有的 `SKILL.md`。`link --apply` 和 `update --apply` 是需要显式打开的写操作。
+审计命令不会修改或删除被扫描的 skill。`report` 只创建指定的报告，`init` 也绝不会覆盖已有的 `SKILL.md`。`prune --apply`、`trash`、`restore`、`link --apply`、`update --apply` 是需要显式执行的写操作。
 
-## 清理
+## 清理 —— 永远不用 `rm`
 
-`prune` 只删**同一个目录里的垃圾**。Cursor、Claude、Codex、Grok 各自装的同一份 skill **不该删**——每个 Agent 只读自己的目录。
+skillint 从不删除任何东西。清理是把条目**移进隔离区** `~/.skillint/trash/<时间戳>/`（带清单文件），`skillint restore` 可以把上一批原路移回：
 
 ```bash
-npx skillint prune -g
-npx skillint prune -g --script > skillint-prune.sh
+npx skillint prune -g            # 看计划：哪些该清、为什么
+npx skillint prune -g --apply    # 把全部安全项移入隔离区
+npx skillint restore             # 后悔了？一键撤销
+npx skillint trash <路径...>     # 手动隔离指定条目
 ```
 
 | 档位 | 含义 |
 | --- | --- |
-| **safe** | 备份、嵌套副本、同一目录内重名。会打印 `rm` 命令。 |
-| **review** | 体积过大或元数据损坏。先裁剪或修复；命令默认注释掉。 |
+| **safe** | 备份、嵌套副本、同一目录内重名。`--apply` 会移入隔离区。 |
+| **review** | 体积过大或元数据损坏。先裁剪或修复；`--apply` 绝不碰它们。 |
+
+`prune` 只处理**同一个目录里的垃圾**。Cursor、Claude、Codex、Grok 各自装的同一份 skill 不会被动——每个 Agent 只读自己的目录，跨 Agent 用 `skillint link` 共享。
 
 ## 交互式界面
 

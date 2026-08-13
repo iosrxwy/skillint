@@ -17,7 +17,9 @@ import { applyLinkPlan, applyUpdates, checkUpdates, resolveLinkPlan } from "./ma
 import { parseFailLevel, parseInteger } from "./options.js";
 import { planPrune } from "./prune.js";
 import { scanSecurity } from "./security.js";
+import { quarantine, restoreLast, trashRoot } from "./trash.js";
 import { runTui } from "./tui.js";
+import { collapseDeletePaths } from "./prune.js";
 import { formatReport } from "./report.js";
 import type { Agent } from "./types.js";
 
@@ -27,7 +29,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.11.0";
+    return "0.12.0";
   }
 }
 
@@ -231,9 +233,10 @@ withScanOptions(program.command("tokens").description("Print a compact token bud
   },
 );
 
-withScanOptions(program.command("prune").description("Suggest what to delete, with rm commands. Never deletes files."))
+withScanOptions(program.command("prune").description("Plan a cleanup. --apply moves safe items to the skillint trash (undoable)."))
   .option("--keep <n>", "also suggest dropping unique skills beyond this ranked count")
-  .option("--script", "print a reviewable shell script of safe rm commands")
+  .option("--script", "print a reviewable shell script of safe trash commands")
+  .option("--apply", "move all safe items into ~/.skillint/trash (undo with `skillint restore`)")
   .option("--max <n>", "max rows per cleanup section", "20")
   .action(
     async (
@@ -242,6 +245,7 @@ withScanOptions(program.command("prune").description("Suggest what to delete, wi
         keep?: string;
         json?: boolean;
         script?: boolean;
+        apply?: boolean;
         max?: string;
         global?: boolean;
         project?: boolean;
@@ -252,6 +256,21 @@ withScanOptions(program.command("prune").description("Suggest what to delete, wi
       const keep = opts.keep == null ? undefined : parseInteger(opts.keep, "--keep", { min: 0 });
       const max = parseInteger(opts.max ?? "20", "--max", { min: 1 });
       const plan = planPrune(result.files, keep);
+      if (opts.apply) {
+        const safePaths = collapseDeletePaths(
+          plan.drop.filter((item) => item.confidence === "safe").map((item) => item.deletePath),
+        );
+        if (safePaths.length === 0) {
+          console.log("Nothing safe to trash.");
+          return;
+        }
+        const moved = await quarantine(safePaths);
+        for (const item of moved.items) console.log(`trashed ${item.from}`);
+        for (const failure of moved.failed) console.log(`failed  ${failure.path} (${failure.error})`);
+        console.log(`\n${moved.items.length} item(s) moved to ${moved.batchDir}`);
+        console.log("Undo with: skillint restore");
+        return;
+      }
       if (opts.json) {
         process.stdout.write(
           toJson({
@@ -275,6 +294,34 @@ withScanOptions(program.command("prune").description("Suggest what to delete, wi
       console.log(formatPrune(plan, { max }));
     },
   );
+
+program
+  .command("trash <paths...>")
+  .description("Move files or folders into ~/.skillint/trash. Undo with `skillint restore`.")
+  .action(async (paths: string[]) => {
+    const moved = await quarantine(paths.map((path) => resolve(path)));
+    for (const item of moved.items) console.log(`trashed ${item.from}`);
+    for (const failure of moved.failed) console.log(`failed  ${failure.path} (${failure.error})`);
+    if (moved.items.length > 0) {
+      console.log(`\n${moved.items.length} item(s) moved to ${moved.batchDir}`);
+      console.log("Undo with: skillint restore");
+    }
+    if (moved.failed.length > 0) process.exitCode = 1;
+  });
+
+program
+  .command("restore")
+  .description("Undo the most recent skillint trash batch.")
+  .action(async () => {
+    const result = await restoreLast();
+    if (!result) {
+      console.log(`Nothing to restore in ${trashRoot()}.`);
+      return;
+    }
+    for (const item of result.restored) console.log(`restored ${item.from}`);
+    for (const skip of result.skipped) console.log(`skipped  ${skip.item.from} (${skip.reason})`);
+    console.log(`\n${result.restored.length} item(s) restored from ${result.batchDir}`);
+  });
 
 withScanOptions(
   program.command("audit").description("Scan installed skills for dangerous patterns. Read-only."),

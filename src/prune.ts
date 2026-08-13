@@ -82,7 +82,7 @@ export function planPrune(files: SkillFile[], keep?: number): PrunePlan {
 
   for (const file of files) {
     if (isBackup(file)) {
-      take(dropItem(file, "backup", "safe", "Backup or leftover copy; safe to delete", undefined));
+      take(dropItem(file, "backup", "safe", "Backup or leftover copy; safe to trash", undefined));
     }
   }
 

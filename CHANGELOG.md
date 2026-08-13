@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.12.0 — 2026-08-13
+
+- Remove `rm -rf` from every suggestion: cleanup now quarantines into `~/.skillint/trash/<timestamp>/` with a manifest
+- Add `skillint trash <paths...>` and `skillint restore` to move items out and back with one command
+- Add `skillint prune --apply` to quarantine all safe items at once, always undoable
+- Make `link --apply` quarantine the replaced copy instead of deleting it before creating the symlink
+- Redesign the TUI: health bar header, tab pills, severity glyphs, calmer per-column colors, boxed detail pane, cyan copyable commands
+
 ## 0.11.0 — 2026-08-13
 
 - Add `skillint ui`: a lazygit-style interactive terminal UI over the whole engine

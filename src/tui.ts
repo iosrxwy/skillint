@@ -3,9 +3,11 @@ import { emitKeypressEvents, type Key } from "node:readline";
 import pc from "picocolors";
 import { discover } from "./discover.js";
 import { doctor, healthScore, summarizeTokens, type DoctorLimits } from "./doctor.js";
+import { healthBar } from "./format.js";
 import { resolveLinkPlan } from "./manage.js";
 import { planPrune } from "./prune.js";
 import { scanSecurity } from "./security.js";
+import { trashCommand } from "./trash.js";
 import type {
   Finding,
   LinkPlan,
@@ -37,7 +39,8 @@ export const TABS = ["issues", "audit", "cleanup", "links", "largest"] as const;
 export type TabId = (typeof TABS)[number];
 
 export interface Row {
-  plain: string;
+  label: string;
+  text: string;
   tone: "error" | "warning" | "info" | "ok" | "plain";
   detail: string[];
   copy?: string;
@@ -64,7 +67,8 @@ function n(value: number): string {
 export function buildRows(tab: TabId, data: TuiData): Row[] {
   if (tab === "issues") {
     return data.findings.map((finding) => ({
-      plain: `${finding.severity === "error" ? "E" : finding.severity === "warning" ? "W" : "i"} ${finding.code.padEnd(22)} ${finding.message}`,
+      label: finding.code,
+      text: finding.message,
       tone: finding.severity,
       detail: [
         finding.path,
@@ -75,7 +79,8 @@ export function buildRows(tab: TabId, data: TuiData): Row[] {
   }
   if (tab === "audit") {
     return data.security.map((finding) => ({
-      plain: `${finding.severity === "error" ? "E" : finding.severity === "warning" ? "W" : "i"} ${finding.code.padEnd(18)} ${finding.message}`,
+      label: finding.code,
+      text: finding.message,
       tone: finding.severity,
       detail: [`${finding.path}:${finding.line}`, `> ${finding.excerpt}`],
       copy: `${finding.path}:${finding.line}`,
@@ -83,29 +88,32 @@ export function buildRows(tab: TabId, data: TuiData): Row[] {
   }
   if (tab === "cleanup") {
     return data.prune.drop.map((item) => {
-      const command = `rm -rf ${shQuote(item.deletePath)}`;
+      const command = trashCommand(item.deletePath);
       return {
-        plain: `[${item.confidence}] ${item.code.padEnd(18)} ${item.file.name} — ${item.reason}`,
+        label: `${item.confidence}·${item.code}`,
+        text: `${item.file.name} — ${item.reason}`,
         tone: item.confidence === "safe" ? "error" : item.confidence === "optional" ? "warning" : "info",
-        detail: [item.deletePath, item.confidence === "review" ? `# ${command}` : command],
+        detail: [item.deletePath, item.confidence === "review" ? `$ # ${command}` : `$ ${command}`],
         copy: command,
-      };
+      } satisfies Row;
     });
   }
   if (tab === "links") {
     return data.link.actions.map((action) => {
-      const command = `rm -rf ${shQuote(action.linkPath)} && ln -s ${shQuote(action.canonicalPath)} ${shQuote(action.linkPath)}`;
+      const command = `${trashCommand(action.linkPath)} && ln -s ${shQuote(action.canonicalPath)} ${shQuote(action.linkPath)}`;
       return {
-        plain: `[${action.status}] ${action.name.padEnd(24)} ${action.linkFamily} -> ${action.canonicalFamily}`,
+        label: action.status,
+        text: `${action.name}  ${action.linkFamily} -> ${action.canonicalFamily}`,
         tone: action.status === "link" ? "ok" : action.status === "conflict" ? "warning" : "plain",
-        detail: [`${action.linkPath}`, `-> ${action.canonicalPath}`, action.reason],
+        detail: [`${action.linkPath}`, `-> ${action.canonicalPath}`, action.status === "link" ? `$ ${command}` : action.reason],
         copy: action.status === "link" ? command : undefined,
-      };
+      } satisfies Row;
     });
   }
   const largest = [...data.result.files].sort((a, b) => b.bodyTokens - a.bodyTokens).slice(0, 100);
   return largest.map((file) => ({
-    plain: `${String(file.bodyTokens).padStart(7)} tok  ${file.kind.padEnd(5)} ${file.name}`,
+    label: `${String(file.bodyTokens).padStart(6)} tok`,
+    text: `${file.kind}  ${file.name}`,
     tone: file.bodyTokens > 4000 ? "warning" : "plain",
     detail: [file.path],
     copy: file.path,
@@ -147,12 +155,26 @@ export function fit(text: string, width: number): string {
   return `${chars.slice(0, width - 1).join("")}…`;
 }
 
-function tone(row: Row, text: string): string {
+const GLYPHS: Record<Row["tone"], string> = {
+  error: pc.red("●"),
+  warning: pc.yellow("▲"),
+  info: pc.dim("○"),
+  ok: pc.green("✓"),
+  plain: pc.dim("·"),
+};
+
+function labelTone(row: Row, text: string): string {
   if (row.tone === "error") return pc.red(text);
   if (row.tone === "warning") return pc.yellow(text);
   if (row.tone === "info") return pc.dim(text);
   if (row.tone === "ok") return pc.green(text);
-  return text;
+  return pc.dim(text);
+}
+
+function labelWidth(rows: Row[]): number {
+  let width = 8;
+  for (const row of rows) width = Math.max(width, Math.min(24, row.label.length));
+  return width;
 }
 
 export function renderFrame(
@@ -165,16 +187,14 @@ export function renderFrame(
   const rows = Math.max(12, size.rows);
   const lines: string[] = [];
 
-  const healthText = `health ${data.health.score}/100 ${data.health.label}`;
-  lines.push(
-    pc.bold(fit(`skillint ui${loading ? " · scanning…" : ""}`, cols - healthText.length - 3)) +
-      "  " +
-      (data.health.score >= 60 ? pc.green(healthText) : pc.red(healthText)),
-  );
+  const title = ` skillint ui${loading ? " · scanning…" : ""} `;
+  const healthText = ` ${data.health.score}/100 ${data.health.label} `;
+  const healthColored = data.health.score >= 85 ? pc.green(healthText) : data.health.score >= 60 ? pc.yellow(healthText) : pc.red(healthText);
+  lines.push(`${pc.inverse(pc.bold(title))} ${healthBar(data.health.score, 10)}${healthColored}`);
   lines.push(
     pc.dim(
       fit(
-        `${n(data.summary.skills)} skills · ${n(data.summary.rules)} rules · meta ~${n(data.summary.metaTokens)} · body ~${n(data.summary.bodyTokens)} tokens`,
+        ` ${n(data.summary.skills)} skills · ${n(data.summary.rules)} rules · body ~${n(data.summary.bodyTokens)} tokens`,
         cols,
       ),
     ),
@@ -183,14 +203,15 @@ export function renderFrame(
   const counts = tabCounts(data);
   const tabBar = TABS.map((tab, index) => {
     const label = ` ${index + 1} ${tab} (${n(counts[index])}) `;
-    return index === state.tab ? pc.inverse(label) : pc.dim(label);
-  }).join("");
-  lines.push(tabBar);
+    return index === state.tab ? pc.bgCyan(pc.black(label)) : pc.dim(label);
+  }).join(" ");
+  lines.push(` ${tabBar}`);
   lines.push(pc.dim("─".repeat(cols)));
 
   const tab = TABS[state.tab];
   const rowsData = buildRows(tab, data);
   const cursor = Math.min(state.cursor[state.tab], Math.max(0, rowsData.length - 1));
+  const width = labelWidth(rowsData);
   const detailHeight = 4;
   const chromeHeight = 4 + detailHeight + 1;
   const viewport = Math.max(3, rows - chromeHeight);
@@ -198,7 +219,7 @@ export function renderFrame(
   if (cursor >= viewport) offset = cursor - viewport + 1;
 
   if (rowsData.length === 0) {
-    lines.push(pc.green(`  nothing in ${tab}`));
+    lines.push(pc.green(`  ✓ nothing in ${tab}`));
     for (let i = 1; i < viewport; i += 1) lines.push("");
   } else {
     for (let i = 0; i < viewport; i += 1) {
@@ -208,21 +229,42 @@ export function renderFrame(
         lines.push("");
         continue;
       }
-      const text = fit(row.plain, cols - 2);
-      lines.push(index === cursor ? pc.inverse(fit(`> ${row.plain}`, cols)) : `  ${tone(row, text)}`);
+      const label = fit(row.label, width).padEnd(width);
+      const text = fit(row.text, Math.max(8, cols - width - 6));
+      if (index === cursor) {
+        lines.push(pc.bgBlue(pc.white(fit(` ❯ ${row.label.padEnd(width)}  ${row.text}`, cols).padEnd(cols))));
+      } else {
+        lines.push(`   ${GLYPHS[row.tone]} ${labelTone(row, label)} ${text}`);
+      }
     }
   }
 
-  lines.push(pc.dim("─".repeat(cols)));
+  lines.push(pc.dim(`─ detail ${"─".repeat(Math.max(0, cols - 9))}`));
   const selected = rowsData[cursor];
   for (let i = 0; i < detailHeight - 1; i += 1) {
     const detail = selected?.detail[i];
-    lines.push(detail ? pc.dim(fit(`  ${detail}`, cols)) : "");
+    if (!detail) {
+      lines.push("");
+      continue;
+    }
+    if (detail.startsWith("$ ")) {
+      lines.push(pc.cyan(fit(`   ${detail}`, cols)));
+    } else {
+      lines.push(pc.dim(fit(`   ${detail}`, cols)));
+    }
   }
 
-  const hints = "1-5 tabs · j/k move · g/G ends · c copy · r rescan · q quit";
-  const message = state.message ? pc.green(state.message) : pc.dim(hints);
-  lines.push(fit(message, cols));
+  const key = (k: string, label: string) => `${pc.cyan(k)}${pc.dim(` ${label}`)}`;
+  const hints = [
+    key("1-5", "tabs"),
+    key("j/k", "move"),
+    key("g/G", "ends"),
+    key("c", "copy"),
+    key("r", "rescan"),
+    key("q", "quit"),
+  ].join(pc.dim("  ·  "));
+  const message = state.message ? pc.green(` ${state.message}`) : ` ${hints}`;
+  lines.push(message);
 
   return lines.slice(0, rows).join("\n");
 }
