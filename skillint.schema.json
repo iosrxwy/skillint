@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://unpkg.com/skillint@latest/skillint.schema.json",
+  "title": "skillint configuration",
+  "description": "Configuration for skillint, the static analyzer for AI agent skills.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "ignore": {
+      "type": "array",
+      "description": "Path names or glob patterns to exclude.",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "uniqueItems": true
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "skillBodyTokens": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 4000
+        },
+        "ruleAlwaysOnTokens": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 800
+        },
+        "descriptionMax": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 1024
+        },
+        "descriptionMin": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 40
+        },
+        "agentsDocLines": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 100
+        },
+        "nameMax": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "default": 64
+        }
+      }
+    }
+  }
+}

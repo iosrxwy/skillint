@@ -280,8 +280,10 @@ async function toSkillFile(
 ): Promise<SkillFile> {
   const info = await stat(filePath);
   const { raw, truncated } = await readSkillText(filePath, info.size);
-  const { data, body } = parseFrontmatter(raw);
+  const parsed = parseFrontmatter(raw);
+  const { data, body } = parsed;
   const name = inferName(filePath, kind, data);
+  const hasDeclaredName = typeof data.name === "string" && data.name.trim().length > 0;
   const description = asString(data.description);
   const alwaysApply = asBoolean(data.alwaysApply) || asBoolean(data["always-apply"]);
   const metaText = `${name}\n${description}`;
@@ -293,7 +295,10 @@ async function toSkillFile(
     kind,
     source,
     name,
+    hasDeclaredName,
     description,
+    hasFrontmatter: parsed.hasFrontmatter,
+    frontmatterError: parsed.error,
     alwaysApply,
     bytes: info.size,
     mtimeMs: info.mtimeMs,
@@ -301,7 +306,7 @@ async function toSkillFile(
     bodyLines: raw.split(/\r?\n/).length,
     metaTokens: estimateTokens(metaText),
     bodyTokens: truncated ? Math.max(estimateTokens(body), estimatedFromSize) : estimateTokens(body),
-    bodyHash: hashBody(trimmedBody),
+    bodyHash: truncated ? "" : hashBody(trimmedBody),
   };
 }
 

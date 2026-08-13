@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0 — 2026-08-13
+
+- Detect missing, unclosed, and invalid YAML frontmatter instead of silently inferring valid metadata
+- Fix `missing-name` so it checks the declared frontmatter field rather than the inferred folder name
+- Stop requiring frontmatter descriptions on plain `AGENTS.md`-style instruction files
+- Avoid false duplicate-content warnings for files whose reads are capped at 512KB
+- Validate `--fail-on`, `--fail-under`, `--max`, and `--keep` instead of silently accepting typos
+- Ship a JSON Schema for `skillint.config.json` and reject unknown configuration keys
+- Smoke-test the packed CLI in CI and enable Dependabot for npm and GitHub Actions
+- Remove the install-time lifecycle script so registry installs are script-free
+- Document the published npm install path (`npx skillint`)
+
 ## 0.7.0 — 2026-08-13
 
 - Add `skillint init <name>` to scaffold a SKILL.md that passes doctor out of the box

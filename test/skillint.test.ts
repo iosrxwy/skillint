@@ -8,6 +8,7 @@ import { discover } from "../src/discover.js";
 import { doctor, healthScore, summarizeTokens } from "../src/doctor.js";
 import { parseFrontmatter } from "../src/frontmatter.js";
 import { scaffoldSkill } from "../src/init.js";
+import { parseFailLevel, parseInteger } from "../src/options.js";
 import { planPrune } from "../src/prune.js";
 import type { SkillFile } from "../src/types.js";
 
@@ -90,8 +91,27 @@ Body
 
   it("returns the whole file when frontmatter is missing", () => {
     const parsed = parseFrontmatter("# just markdown\n");
+    expect(parsed.hasFrontmatter).toBe(false);
+    expect(parsed.error).toBe("");
     expect(parsed.data).toEqual({});
     expect(parsed.body).toContain("just markdown");
+  });
+
+  it("reports malformed and unclosed frontmatter", () => {
+    const malformed = parseFrontmatter("---\nname: [broken\n---\nBody\n");
+    expect(malformed.hasFrontmatter).toBe(true);
+    expect(malformed.error).not.toBe("");
+
+    const unclosed = parseFrontmatter("---\nname: demo\nBody\n");
+    expect(unclosed.hasFrontmatter).toBe(true);
+    expect(unclosed.error).toContain("closing");
+  });
+
+  it("accepts a UTF-8 BOM before frontmatter", () => {
+    const parsed = parseFrontmatter("\uFEFF---\nname: demo\n---\nBody\n");
+    expect(parsed.hasFrontmatter).toBe(true);
+    expect(parsed.error).toBe("");
+    expect(parsed.data.name).toBe("demo");
   });
 });
 
@@ -110,6 +130,7 @@ describe("discover / doctor / prune", () => {
     const findings = doctor(result.files);
     expect(findings.some((item) => item.code === "duplicate-name")).toBe(true);
     expect(findings.some((item) => item.code === "missing-description" && item.path.includes("empty-skill"))).toBe(true);
+    expect(findings.some((item) => item.code === "missing-description" && item.path.endsWith("AGENTS.md"))).toBe(false);
 
     const summary = summarizeTokens(result.files);
     expect(summary.skills).toBe(4);
@@ -311,6 +332,52 @@ Body
     const strict = doctor(result.files, { skillBodyTokens: 1 });
     expect(strict.some((item) => item.code === "oversized")).toBe(true);
   });
+
+  it("distinguishes missing frontmatter from a missing declared name", async () => {
+    const root = await mkdtemp(join(tmpdir(), "skillint-metadata-"));
+    await mkdir(join(root, "plain"), { recursive: true });
+    await mkdir(join(root, "unnamed"), { recursive: true });
+    await writeFile(join(root, "plain", "SKILL.md"), "# Plain\n\nBody\n");
+    await writeFile(
+      join(root, "unnamed", "SKILL.md"),
+      `---
+description: A valid description whose frontmatter forgot the required name field.
+---
+
+Body
+`,
+    );
+
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const findings = doctor(result.files);
+    expect(findings.some((item) => item.code === "missing-frontmatter" && item.path.includes("plain"))).toBe(true);
+    expect(findings.some((item) => item.code === "missing-name" && item.path.includes("unnamed"))).toBe(true);
+  });
+
+  it("surfaces invalid YAML frontmatter as a specific error", async () => {
+    const root = await mkdtemp(join(tmpdir(), "skillint-invalid-yaml-"));
+    await mkdir(join(root, "broken"), { recursive: true });
+    await writeFile(join(root, "broken", "SKILL.md"), "---\nname: [broken\n---\nBody\n");
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const findings = doctor(result.files);
+    expect(findings.filter((item) => item.code === "invalid-frontmatter")).toHaveLength(1);
+    expect(findings.some((item) => item.code === "missing-description")).toBe(false);
+  });
+
+  it("does not hash truncated files for duplicate-content checks", async () => {
+    const root = await mkdtemp(join(tmpdir(), "skillint-large-"));
+    await mkdir(join(root, "large"), { recursive: true });
+    const prefix = `---
+name: large
+description: A deliberately large skill used to verify bounded reads without false duplicate hashes.
+---
+
+`;
+    await writeFile(join(root, "large", "SKILL.md"), `${prefix}${"x".repeat(600_000)}`);
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    expect(result.files[0]?.bodyHash).toBe("");
+    expect(result.files[0]?.bodyTokens).toBeGreaterThan(100_000);
+  });
 });
 
 describe("init", () => {
@@ -353,6 +420,25 @@ describe("config", () => {
     const cwd = await mkdtemp(join(tmpdir(), "skillint-config-"));
     await writeFile(join(cwd, "skillint.config.json"), '{"limits": {"skillBodyTokens": "big"}}');
     await expect(loadConfig(cwd)).rejects.toThrow(/skillBodyTokens/);
+  });
+
+  it("rejects misspelled config keys instead of silently ignoring them", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "skillint-config-"));
+    await writeFile(join(cwd, "skillint.config.json"), '{"limits": {"skillBodyToken": 10}}');
+    await expect(loadConfig(cwd)).rejects.toThrow(/unknown limit/);
+  });
+});
+
+describe("CLI option validation", () => {
+  it("accepts documented fail levels and numeric ranges", () => {
+    expect(parseFailLevel("none")).toBe("none");
+    expect(parseInteger("80", "--fail-under", { min: 0, max: 100 })).toBe(80);
+  });
+
+  it("rejects typos and out-of-range values", () => {
+    expect(() => parseFailLevel("warnings")).toThrow(/Expected error, warning, or none/);
+    expect(() => parseInteger("101", "--fail-under", { min: 0, max: 100 })).toThrow(/0-100/);
+    expect(() => parseInteger("2.5", "--keep", { min: 0 })).toThrow(/integer/);
   });
 });
 
@@ -415,5 +501,6 @@ describe("report", () => {
     expect(markdown).toContain("# skillint report");
     expect(markdown).toContain("## Findings");
     expect(markdown).toContain("duplicate-name");
+    expect(markdown).toContain("Related paths");
   });
 });

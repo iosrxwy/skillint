@@ -22,97 +22,102 @@
 <p align="center">
   Audit <code>SKILL.md</code>, <code>AGENTS.md</code>, and editor rules used by
   <b>Codex</b>, <b>Cursor</b>, <b>Claude Code</b>, <b>Grok</b>, <b>Gemini</b>, <b>Copilot</b>, and other agents.
-  Find duplicates, missing metadata, and context bloat before they land in the prompt.
+  Separate copied installs from real conflicts, diagnose broken metadata, and estimate catalog size before it becomes agent context.
 </p>
 
 <p align="center">
   <a href="https://github.com/iosrxwy/skillint/actions/workflows/ci.yml"><img src="https://github.com/iosrxwy/skillint/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.npmjs.com/package/skillint"><img src="https://img.shields.io/npm/v/skillint" alt="npm version"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT"></a>
   <a href="https://github.com/iosrxwy/skillint/issues"><img src="https://img.shields.io/github/issues/iosrxwy/skillint" alt="issues"></a>
   <a href="https://github.com/iosrxwy/skillint/stargazers"><img src="https://img.shields.io/github/stars/iosrxwy/skillint?style=social" alt="stars"></a>
 </p>
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/social.jpg" alt="skillint — static analysis for AI agent skills" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/social.svg" alt="skillint — static analysis for AI agent skills" width="720">
 </p>
+
+```bash
+npx skillint
+```
+
+This runs the default local scan. The audit path is static and read-only: scanned skills are parsed as text and never executed. `scan`, `doctor`, `tokens`, and `prune` do not modify the catalog; `report` writes only the output file you request.
+
+## What it solves
+
+- **Catalog sprawl** — inventory global and project skills and rules across Codex, Cursor, Claude Code, Grok, Gemini, Copilot, OpenCode, Windsurf, Kiro, Cline, and more
+- **Duplicate noise** — report cross-agent installs as `synced-copy` info while keeping same-agent-family name collisions as errors
+- **Broken skill specs** — diagnose missing, unclosed, or invalid YAML frontmatter; required fields; naming issues; oversized bodies; and long instruction files
+- **Unknown context size** — compare metadata and body size using explicit estimates (`characters / 4`), not exact tokenizer cost or a claim about what any model loaded
+- **CI drift** — emit GitHub Action annotations and summaries, write Markdown/JSON reports, and enforce `--fail-on`, `--fail-under`, or shared config thresholds
+- **Fast local scan** — use concurrent, bounded reads, follow symlinked skill roots without loops, and scaffold a valid starter with `skillint init`
 
 ---
 
 ## Why this exists
 
-Coding agents no longer read one system prompt. They load a catalog of skills on demand.
+Coding agents can discover instructions from many global and project directories. Once those directories accumulate copies, the catalog becomes hard to reason about:
 
-That catalog only works when it is **small, named, and described**. A workstation that copied hundreds of skills will:
-
-- spend thousands of tokens on metadata before any real work starts
-- hide the useful skill behind three near-identical copies
-- inject 10k-token bodies into a single turn
-- fail silently when `description` is missing, so the skill never gets selected
+- the same skill copied across several agents makes inventory noisy
+- duplicate names inside one agent family create real ambiguity
+- malformed or missing metadata makes skill discovery unreliable
+- oversized bodies and always-on rules hide potential context cost
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/hero.jpg" alt="Bloated skill folders filtered down to one healthy SKILL.md" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/hero.svg" alt="Agent skill catalog analyzed into an actionable read-only audit" width="720">
 </p>
 
-`skillint` is the linter for that folder. It does not execute skills. It does not delete files. It reports what an agent would have to carry.
-
-## Features
-
-- **Inventory** — discover skills and rules across Codex, Cursor, Claude Code, Grok, Gemini, Copilot, and project roots
-- **Health score** — 0–100 catalog score from doctor findings and catalog size
-- **Token budget** — estimate metadata cost vs full-body cost (`characters / 4`)
-- **Doctor** — duplicates, missing/short/first-person descriptions, oversized files, long AGENTS.md; copies across Cursor/Claude/Grok are info, not errors
-- **Prune plan** — ranked keep/drop suggestions; never mutates the filesystem
-- **Markdown report** — CI-friendly artifact for pull requests and maintainer review
-- **GitHub Action** — `uses: iosrxwy/skillint@main` on any public repo
-- **JSON output** — every command supports `--json`
+`skillint` turns those directories into an actionable audit: inventory, diagnostics, a 0–100 health score, estimated size, and a ranked prune plan without deleting anything.
 
 ## Install
 
 Requires Node.js 18.18 or later.
 
 ```bash
-git clone https://github.com/iosrxwy/skillint.git
-cd skillint
-npm install
 npx skillint scan
 ```
 
-`npm install` builds the CLI. After that, `npx skillint` works in the repo, or `npm link` puts `skillint` on your PATH.
+No global install is required. To keep the command on your PATH:
+
+```bash
+npm install --global skillint
+skillint scan
+```
 
 ## Quick start
 
 ```bash
-skillint scan                 # inventory + token budget + health bar
-skillint doctor               # diagnostics
-skillint init code-review     # scaffold a SKILL.md that passes doctor
-skillint tokens               # compact numbers
-skillint prune --keep 12      # suggestions only
-skillint report --out out.md  # markdown audit
+npx skillint scan                 # inventory + estimated size + health bar
+npx skillint doctor               # diagnostics
+npx skillint init code-review     # scaffold a SKILL.md that passes doctor
+npx skillint tokens               # compact estimates
+npx skillint prune --keep 12      # suggestions only
+npx skillint report --out out.md  # Markdown audit
 ```
 
 Scope control:
 
 ```bash
-skillint scan -g              # user-level dirs only
-skillint scan -p              # current project only
-skillint doctor ./skills      # one directory
-skillint doctor --json --fail-on error
-skillint doctor --fail-under 80   # fail CI when health drops below 80
+npx skillint scan -g              # user-level dirs only
+npx skillint scan -p              # current project only
+npx skillint doctor ./skills      # one directory
+npx skillint doctor --json --fail-on error
+npx skillint doctor --fail-under 80   # fail CI when health drops below 80
 ```
 
-`prune` and `report` are read-only. skillint never deletes a skill file.
+Audit commands never mutate or delete scanned skill files. `report` creates only the requested report, and `init` never overwrites an existing `SKILL.md`.
 
 ## Example
 
 From a developer machine with a large local skill library:
 
 <p align="center">
-  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/scan.svg" alt="skillint scan showing 1,553 skills and 3.3 million body tokens" width="720">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/scan.svg" alt="skillint scan showing 1,553 skills and an estimated 3.3 million body tokens" width="720">
 </p>
 
 `skillint doctor` on the same machine: **233 findings** (60 duplicate names, 152 oversized files, 20 missing descriptions).
 
-An agent does not need three million tokens of skills.
+The ~3.3M-token figure is a sizing estimate for the discovered files, not a claim that any agent loads the entire catalog.
 
 ## What it scans
 
@@ -166,6 +171,7 @@ Put a `skillint.config.json` next to where you run skillint to share ignore patt
 
 ```json
 {
+  "$schema": "https://unpkg.com/skillint@latest/skillint.schema.json",
   "ignore": ["vendor", "*.bak"],
   "limits": {
     "skillBodyTokens": 3000,
@@ -174,7 +180,7 @@ Put a `skillint.config.json` next to where you run skillint to share ignore patt
 }
 ```
 
-Available limits: `skillBodyTokens` (4000), `ruleAlwaysOnTokens` (800), `descriptionMax` (1024), `descriptionMin` (40), `agentsDocLines` (100), `nameMax` (64).
+The schema provides editor completion and catches misspelled settings. Available limits: `skillBodyTokens` (4000), `ruleAlwaysOnTokens` (800), `descriptionMax` (1024), `descriptionMin` (40), `agentsDocLines` (100), `nameMax` (64).
 
 ## How it works
 
@@ -187,7 +193,7 @@ flowchart LR
   B --> F[token budget]
 ```
 
-skillint only reads files. It never executes a skill and never deletes one.
+Audit commands never execute scanned skills or modify the catalog. `init` creates a new skill, and `report` writes only the report path you request.
 
 ## CI
 

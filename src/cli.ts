@@ -12,6 +12,7 @@ import { formatGithubAnnotations, shouldAnnotate } from "./annotate.js";
 import { compactFiles, formatDoctor, formatGithubSummary, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
 import { loadIgnoreFile } from "./ignore.js";
 import { scaffoldSkill } from "./init.js";
+import { parseFailLevel, parseInteger } from "./options.js";
 import { planPrune } from "./prune.js";
 import { formatReport } from "./report.js";
 
@@ -21,7 +22,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.7.0";
+    return "0.8.0";
   }
 }
 
@@ -138,7 +139,7 @@ withScanOptions(
 withScanOptions(
   program.command("doctor").description("Find duplicates, missing metadata, and oversized skills"),
 )
-  .option("--fail-on <level>", "exit 1 on error or warning", "error")
+  .option("--fail-on <level>", "exit 1 on error, warning, or none", "error")
   .option("--fail-under <score>", "exit 1 when the health score is below this number (0-100)")
   .option("--max <n>", "max detail rows to print", "40")
   .action(
@@ -155,6 +156,10 @@ withScanOptions(
         annotate?: boolean;
       },
     ) => {
+      const failOn = parseFailLevel(opts.failOn ?? "error");
+      const threshold =
+        opts.failUnder == null ? undefined : parseInteger(opts.failUnder, "--fail-under", { min: 0, max: 100 });
+      const max = parseInteger(opts.max ?? "40", "--max", { min: 1 });
       const parsed = await parseRoots(paths, opts);
       const result = await discover(parsed);
       const findings = doctor(result.files, parsed.limits);
@@ -163,20 +168,15 @@ withScanOptions(
       if (opts.json) {
         process.stdout.write(toJson({ health, findings }));
       } else {
-        const max = Number.parseInt(opts.max ?? "40", 10);
-        console.log(formatDoctor(findings, { max: Number.isFinite(max) ? max : 40, health }));
+        console.log(formatDoctor(findings, { max, health }));
       }
       writeAnnotations(findings, opts);
       await maybeGithubSummary(formatGithubSummary({ command: "doctor", health, summary, findings }));
-      const failOn = opts.failOn ?? "error";
       const errors = findings.some((item) => item.severity === "error");
       const warnings = findings.some((item) => item.severity === "warning" || item.severity === "error");
       if (failOn === "error" && errors) process.exitCode = 1;
       if (failOn === "warning" && warnings) process.exitCode = 1;
-      if (opts.failUnder != null) {
-        const threshold = Number.parseInt(opts.failUnder, 10);
-        if (Number.isFinite(threshold) && health.score < threshold) process.exitCode = 1;
-      }
+      if (threshold != null && health.score < threshold) process.exitCode = 1;
     },
   );
 
@@ -211,8 +211,8 @@ withScanOptions(program.command("prune").description("Suggest which skills to ke
       opts: { keep?: string; json?: boolean; global?: boolean; project?: boolean; ignore?: string[] },
     ) => {
       const result = await discover(await parseRoots(paths, opts));
-      const keep = Number.parseInt(opts.keep ?? "20", 10);
-      const plan = planPrune(result.files, Number.isFinite(keep) ? keep : 20);
+      const keep = parseInteger(opts.keep ?? "20", "--keep", { min: 0 });
+      const plan = planPrune(result.files, keep);
       if (opts.json) {
         process.stdout.write(
           toJson({

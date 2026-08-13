@@ -97,59 +97,82 @@ export function doctor(files: SkillFile[], overrides?: Partial<DoctorLimits>): F
     list.push(file);
     byName.set(key, list);
 
-    if (file.kind === "skill" && !file.name.trim()) {
+    const unusableMetadata =
+      Boolean(file.frontmatterError) || (file.kind === "skill" && file.hasFrontmatter === false);
+
+    if (file.kind === "skill" && file.hasFrontmatter === false) {
       findings.push({
-        code: "missing-name",
+        code: "missing-frontmatter",
         severity: "error",
-        message: "Skill is missing a name",
+        message: "Skill is missing YAML frontmatter",
         path: file.path,
       });
-    } else if (file.kind === "skill" && file.name.length > limits.nameMax) {
+    } else if (file.frontmatterError) {
       findings.push({
-        code: "name-too-long",
-        severity: "warning",
-        message: `Name is ${file.name.length} chars (spec limit ${limits.nameMax})`,
-        path: file.path,
-      });
-    } else if (file.kind === "skill" && !SKILL_NAME_RE.test(file.name)) {
-      findings.push({
-        code: "name-invalid",
-        severity: "warning",
-        message: `Name "${file.name}" should be lowercase letters, digits, and hyphens`,
+        code: "invalid-frontmatter",
+        severity: file.kind === "skill" ? "error" : "warning",
+        message: `Invalid frontmatter: ${file.frontmatterError}`,
         path: file.path,
       });
     }
 
-    if (!file.description) {
-      findings.push({
-        code: "missing-description",
-        severity: file.kind === "skill" ? "error" : "warning",
-        message: `${file.kind === "skill" ? "Skill" : "Rule"} is missing a description`,
-        path: file.path,
-      });
-    } else {
-      if (file.description.length > limits.descriptionMax) {
+    if (!unusableMetadata) {
+      if (file.kind === "skill" && file.hasDeclaredName === false) {
         findings.push({
-          code: "description-too-long",
-          severity: "warning",
-          message: `Description is ${file.description.length} chars (limit ${limits.descriptionMax})`,
+          code: "missing-name",
+          severity: "error",
+          message: "Skill frontmatter is missing a name",
           path: file.path,
         });
-      } else if (file.kind === "skill" && file.description.length < limits.descriptionMin) {
+      } else if (file.kind === "skill" && file.name.length > limits.nameMax) {
         findings.push({
-          code: "description-too-short",
+          code: "name-too-long",
           severity: "warning",
-          message: `Description is ${file.description.length} chars (keep at least ${limits.descriptionMin})`,
+          message: `Name is ${file.name.length} chars (spec limit ${limits.nameMax})`,
+          path: file.path,
+        });
+      } else if (file.kind === "skill" && !SKILL_NAME_RE.test(file.name)) {
+        findings.push({
+          code: "name-invalid",
+          severity: "warning",
+          message: `Name "${file.name}" should be lowercase letters, digits, and hyphens`,
           path: file.path,
         });
       }
-      if (file.kind === "skill" && FIRST_PERSON.test(file.description)) {
+
+      const descriptionRequired =
+        file.kind === "skill" || file.hasFrontmatter === true || basename(file.path).toLowerCase().endsWith(".mdc");
+      if (!file.description && descriptionRequired) {
         findings.push({
-          code: "description-first-person",
-          severity: "info",
-          message: "Description should be third person so agents can inject it into a system prompt",
+          code: "missing-description",
+          severity: file.kind === "skill" ? "error" : "warning",
+          message: `${file.kind === "skill" ? "Skill" : "Rule"} is missing a description`,
           path: file.path,
         });
+      } else {
+        if (file.description.length > limits.descriptionMax) {
+          findings.push({
+            code: "description-too-long",
+            severity: "warning",
+            message: `Description is ${file.description.length} chars (limit ${limits.descriptionMax})`,
+            path: file.path,
+          });
+        } else if (file.kind === "skill" && file.description.length < limits.descriptionMin) {
+          findings.push({
+            code: "description-too-short",
+            severity: "warning",
+            message: `Description is ${file.description.length} chars (keep at least ${limits.descriptionMin})`,
+            path: file.path,
+          });
+        }
+        if (file.kind === "skill" && FIRST_PERSON.test(file.description)) {
+          findings.push({
+            code: "description-first-person",
+            severity: "info",
+            message: "Description should be third person so agents can inject it into a system prompt",
+            path: file.path,
+          });
+        }
       }
     }
 

@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title desc">
+  <title id="title">skillint - static analysis for agent skills</title>
+  <desc id="desc">A dark developer-tool social card with the skillint filter mark and a precise terminal audit.</desc>
+  <rect width="1280" height="640" fill="#090C0F"/>
+  <path d="M0 1.5h1280" stroke="#66E3C4" stroke-width="3"/>
+  <g stroke="#151B20" stroke-width="1">
+    <path d="M40 0v640M120 0v640M200 0v640M280 0v640M360 0v640M440 0v640M520 0v640M600 0v640M680 0v640M760 0v640M840 0v640M920 0v640M1000 0v640M1080 0v640M1160 0v640M1240 0v640"/>
+    <path d="M0 80h1280M0 160h1280M0 240h1280M0 320h1280M0 400h1280M0 480h1280M0 560h1280"/>
+  </g>
+
+  <g transform="translate(72 58)">
+    <rect width="56" height="56" rx="12" fill="#0B0E11"/>
+    <rect x=".75" y=".75" width="54.5" height="54.5" rx="11.25" fill="none" stroke="#273139" stroke-width="1.5"/>
+    <g fill="none" stroke="#66E3C4" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 17h12"/>
+      <path d="M13 28h20.5"/>
+      <path d="M13 39h12"/>
+      <path d="M25 17l8.5 11L25 39"/>
+      <path d="M33.5 28H43"/>
+    </g>
+  </g>
+  <text x="146" y="97" fill="#F2F6F4" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="34" font-weight="720" letter-spacing="-.8">skillint</text>
+  <text x="72" y="174" fill="#66E3C4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" font-weight="700" letter-spacing="2">STATIC ANALYSIS FOR AGENT CONTEXT</text>
+  <text x="72" y="260" fill="#F2F6F4" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="64" font-weight="760" letter-spacing="-2.6">eslint for</text>
+  <text x="72" y="334" fill="#66E3C4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="62" font-weight="700" letter-spacing="-2.2">SKILL.md</text>
+  <text x="72" y="397" fill="#A4AFAB" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="21">Find duplicates, broken metadata, and context bloat</text>
+  <text x="72" y="428" fill="#A4AFAB" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="21">before agents rely on them.</text>
+
+  <g transform="translate(72 490)" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13" font-weight="700" letter-spacing=".7">
+    <rect width="116" height="34" rx="17" fill="#10161A" stroke="#2A353C"/>
+    <circle cx="18" cy="17" r="4" fill="#66E3C4"/>
+    <text x="31" y="22" fill="#CFD7D4">READ-ONLY</text>
+    <rect x="128" width="105" height="34" rx="17" fill="#10161A" stroke="#2A353C"/>
+    <text x="147" y="22" fill="#CFD7D4">CI-READY</text>
+    <rect x="245" width="116" height="34" rx="17" fill="#10161A" stroke="#2A353C"/>
+    <text x="265" y="22" fill="#CFD7D4">JSON OUTPUT</text>
+  </g>
+
+  <g transform="translate(690 70)">
+    <rect width="520" height="500" rx="18" fill="#0D1216" stroke="#2A353C" stroke-width="2"/>
+    <path d="M0 58h520" stroke="#222C32"/>
+    <rect x="26" y="24" width="10" height="10" rx="2" fill="#66E3C4"/>
+    <text x="50" y="35" fill="#A4AFAB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">~/agent-skills</text>
+    <text x="465" y="35" text-anchor="end" fill="#687570" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12">READ ONLY</text>
+
+    <text x="28" y="100" fill="#66E3C4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17" font-weight="700">$</text>
+    <text x="50" y="100" fill="#EEF3F1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="17">skillint scan -g</text>
+    <text x="28" y="145" fill="#D7DEDB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="16">6 roots / 1,553 skills / 10 rules</text>
+    <text x="28" y="184" fill="#83908B" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">health</text>
+    <text x="99" y="184" fill="#F4B860" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" font-weight="700">0/100</text>
+    <g transform="translate(166 171)" fill="#273139">
+      <rect width="13" height="13" rx="2"/><rect x="18" width="13" height="13" rx="2"/><rect x="36" width="13" height="13" rx="2"/><rect x="54" width="13" height="13" rx="2"/>
+      <rect x="72" width="13" height="13" rx="2"/><rect x="90" width="13" height="13" rx="2"/><rect x="108" width="13" height="13" rx="2"/><rect x="126" width="13" height="13" rx="2"/>
+      <rect x="144" width="13" height="13" rx="2"/><rect x="162" width="13" height="13" rx="2"/><rect x="180" width="13" height="13" rx="2"/><rect x="198" width="13" height="13" rx="2"/>
+    </g>
+    <text x="402" y="184" fill="#F4B860" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">critical</text>
+
+    <text x="28" y="238" fill="#687570" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="700" letter-spacing="1.6">EST. CONTEXT SIZE</text>
+    <text x="28" y="274" fill="#A4AFAB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">metadata</text>
+    <text x="492" y="274" text-anchor="end" fill="#EEF3F1" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">~68,792 tokens</text>
+    <text x="28" y="307" fill="#A4AFAB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">all bodies</text>
+    <text x="492" y="307" text-anchor="end" fill="#F4B860" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">~3,344,017 tokens</text>
+    <path d="M28 334h464" stroke="#222C32"/>
+
+    <text x="28" y="374" fill="#687570" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="700" letter-spacing="1.6">FINDINGS</text>
+    <circle cx="34" cy="411" r="4" fill="#F4B860"/>
+    <text x="50" y="416" fill="#D7DEDB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">60 duplicate names</text>
+    <circle cx="278" cy="411" r="4" fill="#F4B860"/>
+    <text x="294" y="416" fill="#D7DEDB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">20 missing descriptions</text>
+    <circle cx="34" cy="451" r="4" fill="#F4B860"/>
+    <text x="50" y="456" fill="#D7DEDB" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15">152 oversized files</text>
+    <text x="492" y="456" text-anchor="end" fill="#66E3C4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">no files changed</text>
+  </g>
+</svg>

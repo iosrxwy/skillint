@@ -21,3 +21,25 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: node dist/cli.js doctor ./skills --fail-on error
+
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev
+      - name: Smoke test packed CLI
+        shell: bash
+        run: |
+          npm run build
+          tarball="$(npm pack --silent)"
+          sandbox="$(mktemp -d)"
+          npm install --prefix "$sandbox" "./$tarball"
+          "$sandbox/node_modules/.bin/skillint" --version
+          cd "$sandbox"
+          node_modules/.bin/skillint init smoke-test
+          node_modules/.bin/skillint doctor ./skills --fail-on warning --fail-under 100

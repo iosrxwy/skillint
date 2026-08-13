@@ -57,11 +57,11 @@ export function formatReport(input: {
   if (!findings.length) {
     lines.push("No issues found.");
   } else {
-    lines.push(`| Severity | Code | Message | Path |`);
-    lines.push(`| --- | --- | --- | --- |`);
+    lines.push(`| Severity | Code | Message | Path | Related paths |`);
+    lines.push(`| --- | --- | --- | --- | --- |`);
     for (const finding of findings) {
       lines.push(
-        `| ${finding.severity} | \`${finding.code}\` | ${escapeCell(finding.message)} | \`${escapeCell(finding.path)}\` |`,
+        `| ${finding.severity} | \`${finding.code}\` | ${escapeCell(finding.message)} | \`${escapeCell(finding.path)}\` | ${formatRelated(finding)} |`,
       );
     }
   }
@@ -87,5 +87,12 @@ export function formatReport(input: {
 
 function escapeCell(value: string): string {
   return value.replace(/\|/g, "\\|").replace(/\n/g, " ");
+}
+
+function formatRelated(finding: Finding): string {
+  const related = (finding.extra ?? "")
+    .split(", ")
+    .filter((path) => path && path !== finding.path);
+  return related.map((path) => `\`${escapeCell(path)}\``).join("<br>");
 }
 

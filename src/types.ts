@@ -7,7 +7,10 @@ export interface SkillFile {
   kind: Kind;
   source: Source;
   name: string;
+  hasDeclaredName?: boolean;
   description: string;
+  hasFrontmatter?: boolean;
+  frontmatterError?: string;
   alwaysApply: boolean;
   bytes: number;
   mtimeMs: number;
@@ -21,6 +24,8 @@ export interface SkillFile {
 export type FindingSeverity = "error" | "warning" | "info";
 
 export type FindingCode =
+  | "missing-frontmatter"
+  | "invalid-frontmatter"
   | "duplicate-name"
   | "synced-copy"
   | "duplicate-content"

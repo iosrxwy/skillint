@@ -125,6 +125,15 @@ export function formatDoctor(
           : pc.dim(finding.code);
     lines.push(`  ${tag}  ${finding.message}`);
     lines.push(`           ${pc.dim(finding.path)}`);
+    const related = (finding.extra ?? "")
+      .split(", ")
+      .filter((path) => path && path !== finding.path);
+    for (const path of related.slice(0, 3)) {
+      lines.push(`           ${pc.dim(`↳ ${path}`)}`);
+    }
+    if (related.length > 3) {
+      lines.push(`           ${pc.dim(`↳ … ${n(related.length - 3)} more related paths`)}`);
+    }
   }
   if (findings.length > shown.length) {
     lines.push("", pc.dim(`… ${n(findings.length - shown.length)} more. Use --json for the full list.`));
@@ -216,6 +225,9 @@ export function compactFiles(files: SkillFile[]) {
     source: file.source,
     path: file.path,
     description: file.description,
+    hasFrontmatter: file.hasFrontmatter,
+    frontmatterError: file.frontmatterError,
+    hasDeclaredName: file.hasDeclaredName,
     alwaysApply: file.alwaysApply,
     metaTokens: file.metaTokens,
     bodyTokens: file.bodyTokens,

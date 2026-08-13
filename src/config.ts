@@ -17,13 +17,17 @@ const LIMIT_KEYS: Array<keyof DoctorLimits> = [
   "agentsDocLines",
   "nameMax",
 ];
+const ROOT_KEYS = new Set(["$schema", "ignore", "limits"]);
 
 export async function loadConfig(cwd: string): Promise<SkillintConfig> {
   let text: string;
   try {
     text = await readFile(join(cwd, CONFIG_FILE), "utf8");
-  } catch {
-    return {};
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return {};
+    throw new Error(
+      `Cannot read ${CONFIG_FILE}: ${error instanceof Error ? error.message : String(error)}`,
+    );
   }
 
   let parsed: unknown;
@@ -38,6 +42,10 @@ export async function loadConfig(cwd: string): Promise<SkillintConfig> {
 
   const raw = parsed as Record<string, unknown>;
   const config: SkillintConfig = {};
+  const unknownRoot = Object.keys(raw).filter((key) => !ROOT_KEYS.has(key));
+  if (unknownRoot.length > 0) {
+    throw new Error(`Invalid ${CONFIG_FILE}: unknown key "${unknownRoot[0]}"`);
+  }
 
   if (raw.ignore !== undefined) {
     if (!Array.isArray(raw.ignore) || raw.ignore.some((item) => typeof item !== "string")) {
@@ -50,12 +58,19 @@ export async function loadConfig(cwd: string): Promise<SkillintConfig> {
     if (typeof raw.limits !== "object" || raw.limits === null || Array.isArray(raw.limits)) {
       throw new Error(`Invalid ${CONFIG_FILE}: "limits" must be an object`);
     }
+    const rawLimits = raw.limits as Record<string, unknown>;
+    const unknownLimits = Object.keys(rawLimits).filter(
+      (key) => !LIMIT_KEYS.includes(key as keyof DoctorLimits),
+    );
+    if (unknownLimits.length > 0) {
+      throw new Error(`Invalid ${CONFIG_FILE}: unknown limit "${unknownLimits[0]}"`);
+    }
     const limits: Partial<DoctorLimits> = {};
     for (const key of LIMIT_KEYS) {
-      const value = (raw.limits as Record<string, unknown>)[key];
+      const value = rawLimits[key];
       if (value === undefined) continue;
-      if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
-        throw new Error(`Invalid ${CONFIG_FILE}: "limits.${key}" must be a positive number`);
+      if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) {
+        throw new Error(`Invalid ${CONFIG_FILE}: "limits.${key}" must be a positive integer`);
       }
       limits[key] = value;
     }
