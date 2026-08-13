@@ -93,6 +93,7 @@ npx skillint scan                 # inventory + estimated size + health bar
 npx skillint map --agent cursor   # Cursor's catalog for this directory
 npx skillint doctor               # diagnostics
 npx skillint audit                # security scan: curl|bash, leaked keys, injection
+npx skillint ui                   # interactive terminal UI over everything
 npx skillint init code-review     # scaffold a SKILL.md that passes doctor
 npx skillint tokens               # compact estimates
 npx skillint prune                # cleanup plan with rm commands
@@ -127,6 +128,16 @@ npx skillint prune -g --script > skillint-prune.sh
 | --- | --- |
 | **safe** | Backups, nested copies, same-catalog duplicates. `rm` commands are printed. |
 | **review** | Oversized or broken metadata. Trim or fix; commands are commented out. |
+
+## Interactive UI
+
+`skillint ui` puts the whole engine behind a lazygit-style terminal UI — no flags to remember:
+
+```bash
+npx skillint ui -g
+```
+
+Five tabs with live counts: **issues** (doctor findings), **audit** (security scan), **cleanup** (prune plan), **links** (cross-agent sharing), **largest** (token hogs). Navigate with `1-5` and `j`/`k`, press `c` to copy the suggested command for the selected row, `r` to rescan, `q` to quit. The UI is read-only and needs no extra dependencies — commands are copied to your clipboard, never executed.
 
 ## Security audit
 

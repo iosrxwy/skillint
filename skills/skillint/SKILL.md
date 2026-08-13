@@ -14,6 +14,7 @@ npx skillint scan
 npx skillint map --agent cursor
 npx skillint doctor
 npx skillint audit
+npx skillint ui
 npx skillint tokens
 npx skillint prune
 npx skillint prune --script

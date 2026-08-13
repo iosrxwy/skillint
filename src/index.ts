@@ -6,6 +6,7 @@ export { scaffoldSkill, SKILL_NAME_MAX, SKILL_NAME_RE } from "./init.js";
 export { parseFailLevel, parseInteger, type FailLevel } from "./options.js";
 export { formatGithubAnnotations, formatSecurityAnnotations, shouldAnnotate } from "./annotate.js";
 export { scanSecurity, scanText } from "./security.js";
+export { buildRows, fit, initialState, reduce, renderFrame, runTui, TABS, tabCounts } from "./tui.js";
 export { applyLinkPlan, applyUpdates, checkUpdates, planLink, resolveLinkPlan } from "./manage.js";
 export { collapseDeletePaths, deleteTarget, isBackup, planPrune } from "./prune.js";
 export { formatReport } from "./report.js";

@@ -57,6 +57,7 @@ node dist/cli.js scan
 skillint scan
 skillint doctor
 skillint audit
+skillint ui
 skillint tokens
 skillint prune
 skillint report --out out.md

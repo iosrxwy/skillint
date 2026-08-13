@@ -17,6 +17,7 @@ import { applyLinkPlan, applyUpdates, checkUpdates, resolveLinkPlan } from "./ma
 import { parseFailLevel, parseInteger } from "./options.js";
 import { planPrune } from "./prune.js";
 import { scanSecurity } from "./security.js";
+import { runTui } from "./tui.js";
 import { formatReport } from "./report.js";
 import type { Agent } from "./types.js";
 
@@ -26,7 +27,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.10.0";
+    return "0.11.0";
   }
 }
 
@@ -103,6 +104,7 @@ Examples:
   $ skillint doctor -g
   $ skillint doctor --fail-under 80
   $ skillint audit -g
+  $ skillint ui -g
   $ skillint init code-review
   $ skillint report --out skillint-report.md
   $ skillint prune
@@ -351,6 +353,18 @@ withScanOptions(program.command("update").description("Check git-backed skills f
       console.log(formatUpdate(checks, { max, applied }));
     },
   );
+
+program
+  .command("ui")
+  .description("Interactive terminal UI: issues, audit, cleanup, links, largest")
+  .argument("[paths...]", "optional extra directories to scan")
+  .option("-g, --global", "include user-level dirs for Cursor, Claude, Codex, Grok, Gemini, Copilot, and others")
+  .option("-p, --project", "include the current project")
+  .option("--ignore <pattern>", "ignore path pattern (repeatable)", collect, [])
+  .action(async (paths: string[], opts: { global?: boolean; project?: boolean; ignore?: string[] }) => {
+    const parsed = await parseRoots(paths, opts);
+    await runTui(parsed);
+  });
 
 withScanOptions(program.command("report").description("Write a Markdown audit report"))
   .option("-o, --out <file>", "output path", "skillint-report.md")

@@ -91,6 +91,7 @@ npx skillint scan                 # 数量 + 体量估算 + 健康条
 npx skillint map --agent cursor   # 当前目录对应的 Cursor 目录
 npx skillint doctor               # 诊断
 npx skillint audit                # 安全扫描：curl|bash、泄露密钥、提示词注入
+npx skillint ui                   # 交互式终端界面，覆盖全部功能
 npx skillint init code-review     # 生成一份能直接通过 doctor 的 SKILL.md
 npx skillint tokens               # 精简估算
 npx skillint prune                # 清理计划，带 rm 命令
@@ -123,6 +124,16 @@ npx skillint prune -g --script > skillint-prune.sh
 | --- | --- |
 | **safe** | 备份、嵌套副本、同一目录内重名。会打印 `rm` 命令。 |
 | **review** | 体积过大或元数据损坏。先裁剪或修复；命令默认注释掉。 |
+
+## 交互式界面
+
+`skillint ui` 把整个引擎装进 lazygit 风格的终端界面，不用记参数：
+
+```bash
+npx skillint ui -g
+```
+
+五个标签页带实时计数：**issues**（诊断）、**audit**（安全扫描）、**cleanup**（清理计划）、**links**（跨 Agent 共享）、**largest**（token 大户）。`1-5` 切换、`j`/`k` 移动、`c` 复制选中行的建议命令、`r` 重新扫描、`q` 退出。界面只读、零额外依赖——命令只复制到剪贴板，绝不代替你执行。
 
 ## 安全审计
 

@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.11.0 — 2026-08-13
+
+- Add `skillint ui`: a lazygit-style interactive terminal UI over the whole engine
+- Five tabs — issues, audit, cleanup, links, largest — with live counts and per-row detail
+- Navigate with 1-5/j/k/g/G, copy the suggested command for any row with `c`, rescan with `r`
+- Zero new dependencies: rendered with ANSI escapes and node:readline, TTY required
+- Keep the UI read-only; commands are copied to the clipboard, never executed
+
 ## 0.10.0 — 2026-08-13
 
 - Add `skillint audit`: a read-only supply-chain scan of installed skills for `curl | bash`, leaked tokens, prompt injection, permission bypass, exfiltration wording, and destructive commands, with file:line output and CI gating via `--fail-on`
