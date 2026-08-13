@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.1 — 2026-08-13
+
+- Replace the dark README artwork with a light, accessible visual system
+- Add dedicated diagrams for per-agent catalog mapping and physical inventory
+- Refresh the real-world scan example with current results from 1,658 installed skills
+
 ## 0.9.0 — 2026-08-13
 
 - Add `skillint map [cwd] --agent cursor|claude|codex` with text output and schema-versioned JSON
