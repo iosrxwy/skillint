@@ -186,6 +186,46 @@ Body
     expect(plan.keep.every((file) => result.files.some((item) => item.path === file.path))).toBe(true);
   });
 
+  it("names safe delete targets for backups and nested copies", async () => {
+    const root = await mkdtemp(join(tmpdir(), "skillint-prune-"));
+    const keep = join(root, "skills", "code-review");
+    const nested = join(root, "skills", "router", "code-review");
+    const backup = join(root, "skills", "code-review.bak-20260101");
+    await mkdir(keep, { recursive: true });
+    await mkdir(nested, { recursive: true });
+    await mkdir(backup, { recursive: true });
+    const body = `---
+name: code-review
+description: Review a pull request and leave specific comments.
+---
+
+Review the diff.
+`;
+    await writeFile(join(keep, "SKILL.md"), body);
+    await writeFile(join(nested, "SKILL.md"), body);
+    await writeFile(join(backup, "SKILL.md"), body);
+
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const plan = planPrune(result.files);
+    const safe = plan.drop.filter((item) => item.confidence === "safe");
+    expect(safe.some((item) => item.code === "backup" && item.deletePath === backup)).toBe(true);
+    expect(safe.some((item) => item.code === "nested-copy" && item.deletePath === nested)).toBe(true);
+    expect(plan.keep.some((file) => file.path === join(keep, "SKILL.md"))).toBe(true);
+    expect(plan.drop.every((item) => item.deletePath !== keep)).toBe(true);
+  });
+
+  it("does not treat unique healthy skills as safe deletions", async () => {
+    const root = await fixtureRoot();
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const plan = planPrune(result.files);
+    const ok = result.files.find((file) => file.name === "ok-skill");
+    expect(ok).toBeTruthy();
+    expect(plan.keep.some((file) => file.path === ok?.path)).toBe(true);
+    expect(plan.drop.filter((item) => item.confidence === "safe").every((item) => item.file.name !== "ok-skill")).toBe(
+      true,
+    );
+  });
+
   it("discovers Grok, Gemini, and Copilot skill folders", async () => {
     const home = await mkdtemp(join(tmpdir(), "skillint-home-"));
     const grokDir = join(home, ".grok", "skills", "grok-demo");
@@ -500,6 +540,7 @@ describe("report", () => {
     });
     expect(markdown).toContain("# skillint report");
     expect(markdown).toContain("## Findings");
+    expect(markdown).toContain("## Cleanup plan");
     expect(markdown).toContain("duplicate-name");
     expect(markdown).toContain("Related paths");
   });

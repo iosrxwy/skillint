@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.10.0 — 2026-08-13
+
+- Add `skillint audit`: a read-only supply-chain scan of installed skills for `curl | bash`, leaked tokens, prompt injection, permission bypass, exfiltration wording, and destructive commands, with file:line output and CI gating via `--fail-on`
+- Make `skillint prune` a real cleanup plan: safe / review buckets with `rm` commands
+- Add `skillint prune --script` for a reviewable shell script of safe deletions
+- Stop treating `--keep 20` as the default prune cut, which previously marked almost every unique skill as droppable
+- Keep identical Cursor/Claude/Codex/Grok copies instead of suggesting they be deleted
+- Add `skillint link` to share one canonical copy across agents with symlinks (`--apply` writes links)
+- Add `skillint update` to check git-backed skills (`--apply` runs `git pull --ff-only`)
+- Recognize skills installed by the `skills` CLI via `.agents` lockfiles and point updates at `npx skills update <name>`
+- Include the cleanup plan and security audit in Markdown reports, and emit line-level GitHub annotations for audit findings
+
 ## 0.9.1 — 2026-08-13
 
 - Replace the dark README artwork with a light, accessible visual system

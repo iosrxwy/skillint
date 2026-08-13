@@ -4,10 +4,12 @@ export { DEFAULT_LIMITS, doctor, healthScore, sourceFamily, summarizeTokens, typ
 export { loadConfig, type SkillintConfig } from "./config.js";
 export { scaffoldSkill, SKILL_NAME_MAX, SKILL_NAME_RE } from "./init.js";
 export { parseFailLevel, parseInteger, type FailLevel } from "./options.js";
-export { formatGithubAnnotations, shouldAnnotate } from "./annotate.js";
-export { planPrune } from "./prune.js";
+export { formatGithubAnnotations, formatSecurityAnnotations, shouldAnnotate } from "./annotate.js";
+export { scanSecurity, scanText } from "./security.js";
+export { applyLinkPlan, applyUpdates, checkUpdates, planLink, resolveLinkPlan } from "./manage.js";
+export { collapseDeletePaths, deleteTarget, isBackup, planPrune } from "./prune.js";
 export { formatReport } from "./report.js";
-export { compactFiles, formatDoctor, formatGithubSummary, formatMap, formatPrune, formatScan, formatTokens, healthBar, toJson } from "./format.js";
+export { compactFiles, formatAudit, formatDoctor, formatGithubSummary, formatLink, formatMap, formatPrune, formatPruneScript, formatScan, formatTokens, formatUpdate, healthBar, toJson } from "./format.js";
 export { estimateTokens, parseFrontmatter } from "./frontmatter.js";
 export { isIgnored, parseIgnore } from "./ignore.js";
 export type {
@@ -18,8 +20,14 @@ export type {
   CatalogResult,
   CatalogScope,
   Finding,
+  LinkAction,
+  LinkPlan,
+  LinkStatus,
   LogicalPath,
+  PruneConfidence,
+  PruneDrop,
   PrunePlan,
+  PruneReason,
   RealPath,
   Resolution,
   ResourceResolution,
@@ -27,10 +35,14 @@ export type {
   ResourceVisibility,
   ScanResult,
   Scope,
+  SecurityCode,
+  SecurityFinding,
   SkillFile,
   SourceDocUrl,
   SourceKind,
   TokenSummary,
+  UpdateCheck,
+  UpdateStatus,
   Visibility,
 } from "./types.js";
 

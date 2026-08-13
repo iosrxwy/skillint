@@ -1,5 +1,5 @@
 import { isAbsolute, relative } from "node:path";
-import type { Finding } from "./types.js";
+import type { Finding, SecurityFinding } from "./types.js";
 
 function escapeData(value: string): string {
   return value.replace(/%/g, "%25").replace(/\r/g, "%0D").replace(/\n/g, "%0A");
@@ -22,6 +22,22 @@ export function formatGithubAnnotations(
     const file = repoPath(finding.path, workspace);
     lines.push(
       `::${level} file=${file},title=${finding.code}::${escapeData(finding.message)}`,
+    );
+  }
+  return lines.join("\n");
+}
+
+export function formatSecurityAnnotations(
+  findings: SecurityFinding[],
+  workspace = process.env.GITHUB_WORKSPACE ?? process.cwd(),
+): string {
+  const lines: string[] = [];
+  for (const finding of findings) {
+    if (finding.severity === "info") continue;
+    const level = finding.severity === "error" ? "error" : "warning";
+    const file = repoPath(finding.path, workspace);
+    lines.push(
+      `::${level} file=${file},line=${finding.line},title=${finding.code}::${escapeData(finding.message)}`,
     );
   }
   return lines.join("\n");

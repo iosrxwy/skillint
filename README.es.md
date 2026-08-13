@@ -57,8 +57,9 @@ node dist/cli.js scan
 ```bash
 skillint scan
 skillint doctor
+skillint audit
 skillint tokens
-skillint prune --keep 12
+skillint prune
 skillint report --out out.md
 ```
 

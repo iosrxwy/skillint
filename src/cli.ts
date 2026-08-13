@@ -9,12 +9,14 @@ import { mapCatalog } from "./catalog.js";
 import { discover } from "./discover.js";
 import { doctor, healthScore, summarizeTokens, type DoctorLimits } from "./doctor.js";
 import { loadConfig } from "./config.js";
-import { formatGithubAnnotations, shouldAnnotate } from "./annotate.js";
-import { compactFiles, formatDoctor, formatGithubSummary, formatMap, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
+import { formatGithubAnnotations, formatSecurityAnnotations, shouldAnnotate } from "./annotate.js";
+import { compactFiles, formatAudit, formatDoctor, formatGithubSummary, formatLink, formatMap, formatPrune, formatPruneScript, formatScan, formatTokens, formatUpdate, toJson } from "./format.js";
 import { loadIgnoreFile } from "./ignore.js";
 import { scaffoldSkill } from "./init.js";
+import { applyLinkPlan, applyUpdates, checkUpdates, resolveLinkPlan } from "./manage.js";
 import { parseFailLevel, parseInteger } from "./options.js";
 import { planPrune } from "./prune.js";
+import { scanSecurity } from "./security.js";
 import { formatReport } from "./report.js";
 import type { Agent } from "./types.js";
 
@@ -24,7 +26,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.9.1";
+    return "0.10.0";
   }
 }
 
@@ -100,9 +102,14 @@ Examples:
   $ skillint map --agent cursor
   $ skillint doctor -g
   $ skillint doctor --fail-under 80
+  $ skillint audit -g
   $ skillint init code-review
   $ skillint report --out skillint-report.md
-  $ skillint prune --keep 12
+  $ skillint prune
+  $ skillint prune --script
+  $ skillint link
+  $ skillint link --apply
+  $ skillint update
 
 Exit codes:
   0  success
@@ -222,26 +229,126 @@ withScanOptions(program.command("tokens").description("Print a compact token bud
   },
 );
 
-withScanOptions(program.command("prune").description("Suggest which skills to keep. Never deletes files."))
-  .option("--keep <n>", "how many unique skills/rules to keep", "20")
+withScanOptions(program.command("prune").description("Suggest what to delete, with rm commands. Never deletes files."))
+  .option("--keep <n>", "also suggest dropping unique skills beyond this ranked count")
+  .option("--script", "print a reviewable shell script of safe rm commands")
+  .option("--max <n>", "max rows per cleanup section", "20")
   .action(
     async (
       paths: string[],
-      opts: { keep?: string; json?: boolean; global?: boolean; project?: boolean; ignore?: string[] },
+      opts: {
+        keep?: string;
+        json?: boolean;
+        script?: boolean;
+        max?: string;
+        global?: boolean;
+        project?: boolean;
+        ignore?: string[];
+      },
     ) => {
       const result = await discover(await parseRoots(paths, opts));
-      const keep = parseInteger(opts.keep ?? "20", "--keep", { min: 0 });
+      const keep = opts.keep == null ? undefined : parseInteger(opts.keep, "--keep", { min: 0 });
+      const max = parseInteger(opts.max ?? "20", "--max", { min: 1 });
       const plan = planPrune(result.files, keep);
       if (opts.json) {
         process.stdout.write(
           toJson({
             keep: compactFiles(plan.keep),
-            drop: plan.drop.map((item) => ({ reason: item.reason, file: compactFiles([item.file])[0] })),
+            drop: plan.drop.map((item) => ({
+              reason: item.reason,
+              code: item.code,
+              confidence: item.confidence,
+              keepPath: item.keepPath,
+              deletePath: item.deletePath,
+              file: compactFiles([item.file])[0],
+            })),
           }),
         );
         return;
       }
-      console.log(formatPrune(plan));
+      if (opts.script) {
+        process.stdout.write(formatPruneScript(plan));
+        return;
+      }
+      console.log(formatPrune(plan, { max }));
+    },
+  );
+
+withScanOptions(
+  program.command("audit").description("Scan installed skills for dangerous patterns. Read-only."),
+)
+  .option("--fail-on <level>", "exit 1 on error, warning, or none", "error")
+  .option("--max <n>", "max detail rows to print", "40")
+  .action(
+    async (
+      paths: string[],
+      opts: {
+        json?: boolean;
+        global?: boolean;
+        project?: boolean;
+        ignore?: string[];
+        failOn?: string;
+        max?: string;
+        annotate?: boolean;
+      },
+    ) => {
+      const failOn = parseFailLevel(opts.failOn ?? "error");
+      const max = parseInteger(opts.max ?? "40", "--max", { min: 1 });
+      const result = await discover(await parseRoots(paths, opts));
+      const findings = await scanSecurity(result.files);
+      if (opts.json) {
+        process.stdout.write(toJson({ scanned: result.files.length, findings }));
+      } else {
+        console.log(formatAudit(findings, { max, scanned: result.files.length }));
+      }
+      if (shouldAnnotate(opts.annotate) && !opts.json) {
+        const text = formatSecurityAnnotations(findings);
+        if (text) console.log(text);
+      }
+      const errors = findings.some((item) => item.severity === "error");
+      const warnings = findings.some((item) => item.severity === "warning" || item.severity === "error");
+      if (failOn === "error" && errors) process.exitCode = 1;
+      if (failOn === "warning" && warnings) process.exitCode = 1;
+    },
+  );
+
+withScanOptions(program.command("link").description("Share identical skills across agents with symlinks. Dry run by default."))
+  .option("--apply", "replace identical copies with symlinks to the canonical copy")
+  .option("--max <n>", "max rows to print", "20")
+  .action(
+    async (
+      paths: string[],
+      opts: { json?: boolean; apply?: boolean; max?: string; global?: boolean; project?: boolean; ignore?: string[] },
+    ) => {
+      const result = await discover(await parseRoots(paths, opts));
+      const plan = await resolveLinkPlan(result.files);
+      const max = parseInteger(opts.max ?? "20", "--max", { min: 1 });
+      const applied = opts.apply ? await applyLinkPlan(plan) : undefined;
+      if (opts.json) {
+        process.stdout.write(toJson({ ...plan, applied }));
+        return;
+      }
+      console.log(formatLink(plan, { max, applied }));
+    },
+  );
+
+withScanOptions(program.command("update").description("Check git-backed skills for upstream updates. Dry run by default."))
+  .option("--apply", "git pull --ff-only on checkouts that are behind")
+  .option("--max <n>", "max rows to print", "20")
+  .action(
+    async (
+      paths: string[],
+      opts: { json?: boolean; apply?: boolean; max?: string; global?: boolean; project?: boolean; ignore?: string[] },
+    ) => {
+      const result = await discover(await parseRoots(paths, opts));
+      const checks = await checkUpdates(result.files);
+      const max = parseInteger(opts.max ?? "20", "--max", { min: 1 });
+      const applied = opts.apply ? await applyUpdates(checks) : undefined;
+      if (opts.json) {
+        process.stdout.write(toJson({ checks, applied }));
+        return;
+      }
+      console.log(formatUpdate(checks, { max, applied }));
     },
   );
 
@@ -256,12 +363,14 @@ withScanOptions(program.command("report").description("Write a Markdown audit re
       const result = await discover(parsed);
       const summary = summarizeTokens(result.files);
       const findings = doctor(result.files, parsed.limits);
+      const security = await scanSecurity(result.files);
       const markdown = formatReport({
         generatedAt: new Date().toISOString(),
         result,
         summary,
         findings,
         health: healthScore(result.files, findings),
+        security,
       });
       if (opts.json) {
         process.stdout.write(toJson({ out: opts.out, summary, findings }));

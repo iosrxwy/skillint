@@ -41,7 +41,7 @@
 npx skillint
 ```
 
-This runs the default cross-agent physical inventory. The audit path is static and read-only: scanned skills are parsed as text and never executed. `scan`, `map`, `doctor`, `tokens`, and `prune` do not modify the catalog; `report` writes only the output file you request.
+This runs the default cross-agent physical inventory. The audit path is static and read-only: scanned skills are parsed as text and never executed. `scan`, `map`, `doctor`, `tokens`, and `prune` do not modify the catalog. `link --apply` and `update --apply` are explicit manager writes.
 
 ## What it solves
 
@@ -49,6 +49,7 @@ This runs the default cross-agent physical inventory. The audit path is static a
 - **Agent-specific resolution** — map Cursor, Claude Code, or Codex resources as effective, coexisting, shadowed, conditional, or unknown using each agent's documented discovery semantics
 - **Duplicate noise** — report cross-agent installs as `synced-copy` info while keeping same-agent-family name collisions as errors
 - **Broken skill specs** — diagnose missing, unclosed, or invalid YAML frontmatter; required fields; naming issues; oversized bodies; and long instruction files
+- **Skill supply chain** — audit installed skills for `curl | bash`, leaked tokens, prompt-injection wording, permission bypass flags, and destructive commands, with file:line output
 - **Unknown context size** — compare metadata and body size using explicit estimates (`characters / 4`), not exact tokenizer cost or a claim about what any model loaded
 - **CI drift** — emit GitHub Action annotations and summaries, write Markdown/JSON reports, and enforce `--fail-on`, `--fail-under`, or shared config thresholds
 - **Fast local scan** — use concurrent, bounded reads, follow symlinked skill roots without loops, and scaffold a valid starter with `skillint init`
@@ -68,7 +69,7 @@ Coding agents can discover instructions from many global and project directories
   <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/hero-light.svg" alt="Cursor, Claude Code, and Codex catalogs resolved into explainable states" width="720">
 </p>
 
-`skillint` turns those directories into an actionable audit: inventory, diagnostics, a 0–100 health score, estimated size, and a ranked prune plan without deleting anything.
+`skillint` turns those directories into an actionable audit: inventory, diagnostics, a 0–100 health score, estimated size, and a cleanup plan with `rm` commands. It never deletes files itself.
 
 ## Install
 
@@ -91,9 +92,13 @@ skillint scan
 npx skillint scan                 # inventory + estimated size + health bar
 npx skillint map --agent cursor   # Cursor's catalog for this directory
 npx skillint doctor               # diagnostics
+npx skillint audit                # security scan: curl|bash, leaked keys, injection
 npx skillint init code-review     # scaffold a SKILL.md that passes doctor
 npx skillint tokens               # compact estimates
-npx skillint prune --keep 12      # suggestions only
+npx skillint prune                # cleanup plan with rm commands
+npx skillint prune --script       # reviewable shell script of safe deletes
+npx skillint link                 # share identical copies across agents
+npx skillint update               # check git-backed skills for upstream updates
 npx skillint report --out out.md  # Markdown audit
 ```
 
@@ -107,7 +112,55 @@ npx skillint doctor --json --fail-on error
 npx skillint doctor --fail-under 80   # fail CI when health drops below 80
 ```
 
-Audit commands never mutate or delete scanned skill files. `report` creates only the requested report, and `init` never overwrites an existing `SKILL.md`.
+Audit commands never mutate or delete scanned skill files. `report` creates only the requested report, and `init` never overwrites an existing `SKILL.md`. `link --apply` and `update --apply` are explicit write operations.
+
+## Cleanup
+
+`prune` deletes junk inside one catalog. It does **not** delete the same skill installed in Cursor, Claude, Codex, and Grok — each agent only reads its own directory.
+
+```bash
+npx skillint prune -g
+npx skillint prune -g --script > skillint-prune.sh
+```
+
+| Bucket | Meaning |
+| --- | --- |
+| **safe** | Backups, nested copies, same-catalog duplicates. `rm` commands are printed. |
+| **review** | Oversized or broken metadata. Trim or fix; commands are commented out. |
+
+## Security audit
+
+Skills are markdown you installed from the internet, and agents follow them. `audit` scans every installed skill for dangerous patterns — before an agent acts on one:
+
+```bash
+npx skillint audit -g
+npx skillint audit --fail-on error   # gate CI
+```
+
+| Rule | Flags |
+| --- | --- |
+| `remote-exec` | `curl \| bash`, `irm \| iex` install pipes |
+| `credential` | AWS/GitHub/Stripe/Slack/OpenAI token formats, private key blocks |
+| `prompt-injection` | "ignore previous instructions", "hide this from the user" |
+| `exfiltration` | instructions to send secrets or env data to a URL |
+| `permission-bypass` | `--dangerously-skip-permissions`, `--yolo`, `--no-sandbox` |
+| `sensitive-file` | `~/.ssh`, `.aws/credentials`, keychain reads |
+| `destructive` | `rm -rf ~`, fork bombs |
+
+Documentation placeholders (`sk-xxxx…`, `AKIA…EXAMPLE`) are filtered out. Findings include `path:line` and the matching excerpt; in GitHub Actions they surface as line-level annotations. The scan is static and read-only — nothing is executed.
+
+## Skill manager
+
+Identical copies across agents should be **shared**, not deleted:
+
+```bash
+npx skillint link -g              # dry run
+npx skillint link -g --apply      # replace identical copies with symlinks
+npx skillint update -g            # check git remotes
+npx skillint update -g --apply    # git pull --ff-only when behind
+```
+
+`link` keeps one canonical copy (preferring `~/.agents/skills`) and points the other agent directories at it. After that, editing or updating the canonical copy is visible to every linked agent. `update` can only pull when the skill is a git checkout with a remote; marketplace copies have no upstream.
 
 ## Agent-aware map
 

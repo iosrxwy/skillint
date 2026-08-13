@@ -39,7 +39,7 @@
 npx skillint
 ```
 
-这会运行默认的跨 Agent 物理清单扫描。审计链路是静态、只读的：skill 只会被当作文本解析，绝不会被执行。`scan`、`map`、`doctor`、`tokens`、`prune` 不修改目录；`report` 只写入你指定的报告文件。
+这会运行默认的跨 Agent 物理清单扫描。审计链路默认是静态、只读的：skill 只会被当作文本解析，绝不会被执行。`scan`、`map`、`doctor`、`tokens`、`prune` 不修改目录。`link --apply` 和 `update --apply` 才是显式的管理器写操作。
 
 ## 它解决什么
 
@@ -47,6 +47,7 @@ npx skillint
 - **按 Agent 解析**：按照 Cursor、Claude Code、Codex 各自的官方发现语义，把资源标为 effective、coexisting、shadowed、conditional 或 unknown
 - **重复项噪声**：跨 Agent 安装记为 `synced-copy`（info），同一 Agent 系列内的重名才记为错误
 - **Skill 规范损坏**：诊断缺失、未闭合或无效的 YAML frontmatter，以及必填字段、命名、正文过大、说明文件过长等问题
+- **Skill 供应链**：审计已装 skill 里的 `curl | bash`、泄露 token、提示词注入话术、权限绕过参数和破坏性命令，结果带 路径:行号
 - **上下文体量不明**：用明确标注的估算值（`字符数 / 4`）比较元数据与正文；不冒充精确 tokenizer 成本，也不声称模型实际加载了哪些文件
 - **CI 漂移**：输出 GitHub Action annotation 与 summary、Markdown/JSON 报告，并用 `--fail-on`、`--fail-under` 或共享配置阈值卡住回退
 - **快速本地扫描**：并发、限量读取；识别符号链接并避免循环遍历；用 `skillint init` 生成合规起点
@@ -66,7 +67,7 @@ npx skillint
   <img src="docs/hero-light.svg" alt="把 Cursor、Claude Code 和 Codex 目录解析成可解释状态" width="720">
 </p>
 
-`skillint` 把这些目录整理成可执行的审计结果：清单、诊断、0–100 健康分、体量估算和精简建议，全程不删除文件。
+`skillint` 把这些目录整理成可执行的审计结果：清单、诊断、0–100 健康分、体量估算，以及带 `rm` 命令的清理计划。它自己不会删文件。
 
 ## 安装
 
@@ -89,9 +90,13 @@ skillint scan
 npx skillint scan                 # 数量 + 体量估算 + 健康条
 npx skillint map --agent cursor   # 当前目录对应的 Cursor 目录
 npx skillint doctor               # 诊断
+npx skillint audit                # 安全扫描：curl|bash、泄露密钥、提示词注入
 npx skillint init code-review     # 生成一份能直接通过 doctor 的 SKILL.md
 npx skillint tokens               # 精简估算
-npx skillint prune --keep 12      # 只给建议
+npx skillint prune                # 清理计划，带 rm 命令
+npx skillint prune --script       # 只输出可审阅的安全删除脚本
+npx skillint link                 # 跨 Agent 共享同一份 skill
+npx skillint update               # 检查有 git 远程的 skill 能否更新
 npx skillint report --out out.md  # Markdown 报告
 ```
 
@@ -103,7 +108,55 @@ npx skillint doctor --json --fail-on error
 npx skillint doctor --fail-under 80   # 健康分低于 80 时让 CI 失败
 ```
 
-审计命令不会修改或删除被扫描的 skill。`report` 只创建指定的报告，`init` 也绝不会覆盖已有的 `SKILL.md`。
+审计命令不会修改或删除被扫描的 skill。`report` 只创建指定的报告，`init` 也绝不会覆盖已有的 `SKILL.md`。`link --apply` 和 `update --apply` 是需要显式打开的写操作。
+
+## 清理
+
+`prune` 只删**同一个目录里的垃圾**。Cursor、Claude、Codex、Grok 各自装的同一份 skill **不该删**——每个 Agent 只读自己的目录。
+
+```bash
+npx skillint prune -g
+npx skillint prune -g --script > skillint-prune.sh
+```
+
+| 档位 | 含义 |
+| --- | --- |
+| **safe** | 备份、嵌套副本、同一目录内重名。会打印 `rm` 命令。 |
+| **review** | 体积过大或元数据损坏。先裁剪或修复；命令默认注释掉。 |
+
+## 安全审计
+
+Skill 是你从网上装来的 markdown，而 Agent 会照着执行。`audit` 在 Agent 执行之前，静态扫描每一份已装 skill 里的危险模式：
+
+```bash
+npx skillint audit -g
+npx skillint audit --fail-on error   # 在 CI 里卡门禁
+```
+
+| 规则 | 检出内容 |
+| --- | --- |
+| `remote-exec` | `curl \| bash`、`irm \| iex` 安装管道 |
+| `credential` | AWS/GitHub/Stripe/Slack/OpenAI token 格式、私钥块 |
+| `prompt-injection` | “忽略之前的指令”“不要告诉用户”这类话术 |
+| `exfiltration` | 要求把密钥或环境变量发送到某个 URL |
+| `permission-bypass` | `--dangerously-skip-permissions`、`--yolo`、`--no-sandbox` |
+| `sensitive-file` | `~/.ssh`、`.aws/credentials`、keychain 读取 |
+| `destructive` | `rm -rf ~`、fork 炸弹 |
+
+文档占位符（`sk-xxxx…`、`AKIA…EXAMPLE`）会被过滤。每条结果带 `路径:行号` 和命中片段；在 GitHub Actions 里会显示为行级注解。扫描是静态只读的，不执行任何内容。
+
+## Skill 管理器
+
+跨 Agent 的相同副本应该**共享**，而不是互删：
+
+```bash
+npx skillint link -g              # 先看计划
+npx skillint link -g --apply      # 把相同副本换成指向正本的符号链接
+npx skillint update -g            # 检查 git 远程
+npx skillint update -g --apply    # 落后时 git pull --ff-only
+```
+
+`link` 会留一份正本（优先 `~/.agents/skills`），其它 Agent 目录改成指向它。之后改正本，所有已链接的 Agent 都能看到。`update` 只能拉取「本身就是 git 仓库且有 remote」的 skill；应用商店拷过来的副本没有上游，不能凭空一键更新。
 
 ## Agent 感知的目录映射
 

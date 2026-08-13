@@ -131,7 +131,74 @@ export interface TokenSummary {
   bySource: Record<string, { files: number; metaTokens: number; bodyTokens: number }>;
 }
 
+export type PruneConfidence = "safe" | "optional" | "review";
+
+export type PruneReason =
+  | "backup"
+  | "nested-copy"
+  | "duplicate-name"
+  | "duplicate-content"
+  | "synced-copy"
+  | "oversized"
+  | "broken-metadata"
+  | "low-score";
+
+export interface PruneDrop {
+  file: SkillFile;
+  reason: string;
+  code: PruneReason;
+  confidence: PruneConfidence;
+  keepPath?: string;
+  deletePath: string;
+}
+
 export interface PrunePlan {
   keep: SkillFile[];
-  drop: Array<{ file: SkillFile; reason: string }>;
+  drop: PruneDrop[];
+}
+
+export type LinkStatus = "link" | "already-linked" | "conflict";
+
+export interface LinkAction {
+  name: string;
+  canonicalPath: string;
+  canonicalFamily: string;
+  linkPath: string;
+  linkFamily: string;
+  status: LinkStatus;
+  reason: string;
+}
+
+export interface LinkPlan {
+  actions: LinkAction[];
+}
+
+export type UpdateStatus = "up-to-date" | "behind" | "ahead" | "dirty" | "no-remote" | "not-git" | "lockfile";
+
+export interface UpdateCheck {
+  name: string;
+  path: string;
+  status: UpdateStatus;
+  remote?: string;
+  hint?: string;
+}
+
+export type SecurityCode =
+  | "remote-exec"
+  | "eval-remote"
+  | "credential"
+  | "sensitive-file"
+  | "prompt-injection"
+  | "exfiltration"
+  | "permission-bypass"
+  | "destructive"
+  | "obfuscation";
+
+export interface SecurityFinding {
+  code: SecurityCode;
+  severity: FindingSeverity;
+  message: string;
+  path: string;
+  line: number;
+  excerpt: string;
 }
