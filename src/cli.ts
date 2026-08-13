@@ -21,6 +21,17 @@ import { quarantine, restoreLast, trashRoot } from "./trash.js";
 import { runTui } from "./tui.js";
 import { runWizard } from "./wizard.js";
 import { collapseDeletePaths } from "./prune.js";
+import { renderBadge } from "./badge.js";
+import { applyFix, planFix } from "./fix.js";
+import { formatHtmlReport } from "./html.js";
+import {
+  DEFAULT_REGISTRY_REPOS,
+  adoptSkills,
+  applyAdopted,
+  checkAdopted,
+  collectRegistrySkills,
+  syncRegistry,
+} from "./registry.js";
 import { formatReport } from "./report.js";
 import type { Agent } from "./types.js";
 
@@ -30,7 +41,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.14.0";
+    return "0.15.0";
   }
 }
 
@@ -388,8 +399,8 @@ withScanOptions(program.command("link").description("Share identical skills acro
     },
   );
 
-withScanOptions(program.command("update").description("Check git-backed skills for upstream updates. Dry run by default."))
-  .option("--apply", "git pull --ff-only on checkouts that are behind")
+withScanOptions(program.command("update").description("Check git-backed and adopted skills for upstream updates. Dry run by default."))
+  .option("--apply", "update checkouts and adopted skills that are behind (undoable for adopted)")
   .option("--max <n>", "max rows to print", "20")
   .action(
     async (
@@ -397,14 +408,117 @@ withScanOptions(program.command("update").description("Check git-backed skills f
       opts: { json?: boolean; apply?: boolean; max?: string; global?: boolean; project?: boolean; ignore?: string[] },
     ) => {
       const result = await discover(await parseRoots(paths, opts));
-      const checks = await checkUpdates(result.files);
+      const adopted = await checkAdopted(result.files);
+      const adoptedPaths = new Set(adopted.map((item) => item.path));
+      const gitChecks = (await checkUpdates(result.files)).filter((item) => !adoptedPaths.has(item.path));
+      const checks = [...gitChecks, ...adopted].sort((a, b) => a.path.localeCompare(b.path));
       const max = parseInteger(opts.max ?? "20", "--max", { min: 1 });
-      const applied = opts.apply ? await applyUpdates(checks) : undefined;
+      let applied: { updated: number; skipped: number } | undefined;
+      if (opts.apply) {
+        const fromGit = await applyUpdates(gitChecks);
+        const fromRegistry = await applyAdopted(adopted);
+        applied = { updated: fromGit.updated + fromRegistry.updated, skipped: fromGit.skipped + fromRegistry.skipped };
+      }
       if (opts.json) {
         process.stdout.write(toJson({ checks, applied }));
         return;
       }
       console.log(formatUpdate(checks, { max, applied }));
+    },
+  );
+
+program
+  .command("adopt")
+  .description("Match orphan skills to known public repos so `skillint update` can batch-update them.")
+  .argument("[paths...]", "optional extra directories to scan")
+  .option("-g, --global", "include user-level dirs")
+  .option("-p, --project", "include the current project")
+  .option("--ignore <pattern>", "ignore path pattern (repeatable)", collect, [])
+  .option("--repo <owner/repo>", "additional registry repo (repeatable)", collect, [])
+  .option("--json", "print JSON")
+  .action(
+    async (
+      paths: string[],
+      opts: { global?: boolean; project?: boolean; ignore?: string[]; repo?: string[]; json?: boolean },
+    ) => {
+      const repos = [...DEFAULT_REGISTRY_REPOS, ...(opts.repo ?? [])];
+      const sync = await syncRegistry(repos);
+      const registry = await collectRegistrySkills(sync.synced);
+      const result = await discover(await parseRoots(paths, opts));
+      const adoption = await adoptSkills(result.files, registry);
+      if (opts.json) {
+        process.stdout.write(toJson({ sync, ...adoption }));
+        return;
+      }
+      console.log(`registry: ${sync.synced.length} repo(s) synced${sync.failed.length ? `, ${sync.failed.length} failed (${sync.failed.join(", ")})` : ""}`);
+      console.log(`registry skills: ${registry.length}`);
+      console.log("");
+      for (const item of adoption.adopted) {
+        console.log(`adopted  ${item.name}  <- ${item.repo}`);
+      }
+      console.log(
+        `\n${adoption.adopted.length} adopted by content match · ${adoption.alreadyAdopted} already adopted · ${adoption.nameCandidates.length} name-only candidates · ${adoption.orphans} unmatched`,
+      );
+      if (adoption.nameCandidates.length > 0) {
+        console.log("\nName-only candidates (content differs; verify before trusting):");
+        for (const item of adoption.nameCandidates.slice(0, 10)) {
+          console.log(`  ? ${item.name}  ~ ${item.repo}`);
+        }
+      }
+      if (adoption.adopted.length > 0) {
+        console.log("\nNext: `skillint update` now covers adopted skills; `--apply` updates them (undoable).");
+      }
+    },
+  );
+
+withScanOptions(program.command("fix").description("Repair skills with missing frontmatter, names, or descriptions. Dry run by default."))
+  .option("--apply", "write repairs; originals go to ~/.skillint/trash first")
+  .action(
+    async (
+      paths: string[],
+      opts: { json?: boolean; apply?: boolean; global?: boolean; project?: boolean; ignore?: string[] },
+    ) => {
+      const result = await discover(await parseRoots(paths, opts));
+      const plan = await planFix(result.files);
+      if (opts.json) {
+        process.stdout.write(toJson({ plan: plan.map(({ newContent, ...rest }) => rest), applied: undefined }));
+        return;
+      }
+      if (plan.length === 0) {
+        console.log("Nothing to fix: every skill has frontmatter, a name, and a description.");
+        return;
+      }
+      for (const item of plan) {
+        console.log(`${item.problems.join(", ")}  ${item.path}`);
+        console.log(`  name: ${item.name}`);
+        console.log(`  description: ${item.description}`);
+      }
+      if (!opts.apply) {
+        console.log(`\n${plan.length} skill(s) repairable. Run \`skillint fix --apply\` to write (originals are trashed first).`);
+        return;
+      }
+      const applied = await applyFix(plan);
+      console.log(`\nfixed ${applied.fixed} skill(s); originals saved to ${applied.batchDir ?? "the skillint trash"}`);
+      console.log("To revert one: delete the new SKILL.md, then run `skillint restore`.");
+    },
+  );
+
+withScanOptions(program.command("badge").description("Write an SVG health badge for your README."))
+  .option("-o, --out <file>", "output path", "skills-health.svg")
+  .action(
+    async (
+      paths: string[],
+      opts: { out?: string; json?: boolean; global?: boolean; project?: boolean; ignore?: string[] },
+    ) => {
+      const parsed = await parseRoots(paths, opts);
+      const result = await discover(parsed);
+      const findings = doctor(result.files, parsed.limits);
+      const health = healthScore(result.files, findings);
+      const out = resolve(opts.out ?? "skills-health.svg");
+      await writeFile(out, renderBadge(health.score), "utf8");
+      console.log(`wrote ${out} (health ${health.score}/100)`);
+      const embed = opts.out ?? "skills-health.svg";
+      console.log(`embed: ![skills health](${embed.startsWith("/") ? embed : `./${embed}`})`);
     },
   );
 
@@ -420,26 +534,22 @@ program
     await runTui(parsed);
   });
 
-withScanOptions(program.command("report").description("Write a Markdown audit report"))
+withScanOptions(program.command("report").description("Write a Markdown audit report, optionally with an HTML dashboard"))
   .option("-o, --out <file>", "output path", "skillint-report.md")
+  .option("--html [file]", "also write a self-contained HTML dashboard")
   .action(
     async (
       paths: string[],
-      opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; out?: string },
+      opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; out?: string; html?: string | boolean },
     ) => {
       const parsed = await parseRoots(paths, opts);
       const result = await discover(parsed);
       const summary = summarizeTokens(result.files);
       const findings = doctor(result.files, parsed.limits);
       const security = await scanSecurity(result.files);
-      const markdown = formatReport({
-        generatedAt: new Date().toISOString(),
-        result,
-        summary,
-        findings,
-        health: healthScore(result.files, findings),
-        security,
-      });
+      const health = healthScore(result.files, findings);
+      const generatedAt = new Date().toISOString();
+      const markdown = formatReport({ generatedAt, result, summary, findings, health, security });
       if (opts.json) {
         process.stdout.write(toJson({ out: opts.out, summary, findings }));
         return;
@@ -447,6 +557,20 @@ withScanOptions(program.command("report").description("Write a Markdown audit re
       const out = resolve(opts.out ?? "skillint-report.md");
       await writeFile(out, markdown, "utf8");
       console.log(`wrote ${out}`);
+      if (opts.html != null && opts.html !== false) {
+        const htmlOut = resolve(typeof opts.html === "string" ? opts.html : "skillint-report.html");
+        const html = formatHtmlReport({
+          generatedAt,
+          result,
+          summary,
+          findings,
+          security,
+          prune: planPrune(result.files),
+          health,
+        });
+        await writeFile(htmlOut, html, "utf8");
+        console.log(`wrote ${htmlOut}`);
+      }
     },
   );
 

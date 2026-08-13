@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.15.0 — 2026-08-13
+
+- Add `skillint adopt`: fingerprint-match orphan skills against known public repos (Anthropic, Vercel, superpowers) and record their provenance
+- Teach `skillint update` to batch-check and batch-update adopted skills (`--apply` is quarantine-backed and undoable)
+- Add `skillint fix`: resurrect dead skills — recover frontmatter written without `---` markers, normalize `--- ` delimiters with trailing spaces, and draft missing names/descriptions from the body
+- Tolerate trailing whitespace after frontmatter delimiters across the whole engine; on a real machine this alone revived 8 "broken" skills and raised the health score from 10 to 42
+- Add `skillint report --html`: a self-contained, zero-dependency HTML dashboard with health gauge, per-source bars, and filterable findings/security/cleanup tables
+- Add `skillint badge`: a shields-style SVG health badge for READMEs and dotfiles
+
 ## 0.14.0 — 2026-08-13
 
 - Make the checkup report concrete: named examples per category, security hits with file:line excerpts, wasted-token totals, and a full-context-window equivalence

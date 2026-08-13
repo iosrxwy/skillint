@@ -103,6 +103,11 @@ npx skillint tokens               # 精简估算
 npx skillint prune                # 清理计划（安全项进可撤销的隔离区）
 npx skillint prune --apply        # 把全部安全项移入 ~/.skillint/trash
 npx skillint restore              # 一键撤销上一批
+npx skillint fix --apply          # 复活元数据损坏的 skill
+npx skillint adopt                # 孤儿 skill 认领来源
+npx skillint update --apply       # 批量更新 git + 已认领的 skill
+npx skillint report --html        # 单文件 HTML 仪表盘
+npx skillint badge                # README 用的健康分徽章
 
 npx skillint link                 # 跨 Agent 共享同一份 skill
 npx skillint update               # 检查有 git 远程的 skill 能否更新
@@ -175,11 +180,32 @@ npx skillint audit --fail-on error   # 在 CI 里卡门禁
 ```bash
 npx skillint link -g              # 先看计划
 npx skillint link -g --apply      # 把相同副本换成指向正本的符号链接
-npx skillint update -g            # 检查 git 远程
-npx skillint update -g --apply    # 落后时 git pull --ff-only
+npx skillint adopt -g             # 用内容指纹给孤儿 skill 认领来源
+npx skillint update -g            # 检查 git 仓库 + 已认领的 skill
+npx skillint update -g --apply    # 批量更新所有落后的
 ```
 
-`link` 会留一份正本（优先 `~/.agents/skills`），其它 Agent 目录改成指向它。之后改正本，所有已链接的 Agent 都能看到。`update` 只能拉取「本身就是 git 仓库且有 remote」的 skill；应用商店拷过来的副本没有上游，不能凭空一键更新。
+`adopt` 解决「市场拷来的 skill 没有上游、谁都更新不了」的问题：给每个已装 skill 算内容指纹，和知名公共仓库（Anthropic skills、Vercel agent-skills、superpowers，`--repo` 可加）比对，命中就记录来源。之后 `skillint update` 就能批量检查、`--apply` 批量更新——旧版本先进隔离区，`skillint restore` 照样能反悔。只有同名但内容不同的会列为「候选」，绝不自动更新。
+
+## 修复损坏的 skill
+
+有些装好的 skill 对 Agent 完全隐形——常常只是因为 `---` 后面多了个空格：
+
+```bash
+npx skillint fix                  # 先看会恢复出什么
+npx skillint fix --apply          # 写入；原文件先进隔离区
+```
+
+`fix` 能恢复没写 `---` 包裹的裸 frontmatter、归一化带尾随空格的分隔符、从文件夹名和正文起草缺失的 name/description。扫描引擎本身也已容错——仅这一项就让这台机器上 8 个「死 skill」复活，健康分从 10 涨到 42。
+
+## HTML 仪表盘和徽章
+
+```bash
+npx skillint report --html        # 生成单文件 skillint-report.html，零依赖
+npx skillint badge                # 生成 skills-health.svg + 可直接粘贴的引用
+```
+
+仪表盘带健康分仪表、按来源的条形图、可筛选的诊断/安全/清理表格——可以直接发给同事或贴到 PR 里。徽章是 shields 风格、按分数变色，适合放 README 和 dotfiles 仓库。
 
 ## Agent 感知的目录映射
 

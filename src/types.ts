@@ -181,6 +181,7 @@ export interface UpdateCheck {
   status: UpdateStatus;
   remote?: string;
   hint?: string;
+  manager?: "git" | "adopted";
 }
 
 export type SecurityCode =

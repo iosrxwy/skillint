@@ -1,7 +1,15 @@
 import { parse as parseYaml } from "yaml";
 
-const FRONTMATTER_RE = /^\uFEFF?---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
-const FRONTMATTER_START_RE = /^\uFEFF?---\r?\n/;
+const FRONTMATTER_RE = /^\uFEFF?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/;
+const FRONTMATTER_START_RE = /^\uFEFF?---[ \t]*\r?\n/;
+const SLOPPY_DELIMITER_RE = /^\uFEFF?---[ \t]+\r?\n/;
+
+export function hasSloppyFrontmatterDelimiter(text: string): boolean {
+  if (SLOPPY_DELIMITER_RE.test(text)) return true;
+  const match = text.match(FRONTMATTER_RE);
+  if (!match) return false;
+  return /\n---[ \t]+(?:\r?\n|$)/.test(match[0]);
+}
 
 export interface FrontmatterResult {
   data: Record<string, unknown>;

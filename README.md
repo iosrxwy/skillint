@@ -105,6 +105,11 @@ npx skillint tokens               # compact estimates
 npx skillint prune                # cleanup plan (safe items -> undoable trash)
 npx skillint prune --apply        # move all safe items to ~/.skillint/trash
 npx skillint restore              # undo the last trash batch
+npx skillint fix --apply          # resurrect skills with broken frontmatter
+npx skillint adopt                # match orphan skills to known repos
+npx skillint update --apply       # batch-update git + adopted skills
+npx skillint report --html        # self-contained HTML dashboard
+npx skillint badge                # SVG health badge for your README
 npx skillint link                 # share identical copies across agents
 npx skillint update               # check git-backed skills for upstream updates
 npx skillint report --out out.md  # Markdown audit
@@ -178,11 +183,32 @@ Identical copies across agents should be **shared**, not deleted:
 ```bash
 npx skillint link -g              # dry run
 npx skillint link -g --apply      # replace identical copies with symlinks
-npx skillint update -g            # check git remotes
-npx skillint update -g --apply    # git pull --ff-only when behind
+npx skillint adopt -g             # fingerprint-match orphans to known repos
+npx skillint update -g            # check git checkouts + adopted skills
+npx skillint update -g --apply    # batch-update everything that is behind
 ```
 
-`link` keeps one canonical copy (preferring `~/.agents/skills`) and points the other agent directories at it. After that, editing or updating the canonical copy is visible to every linked agent. `update` can only pull when the skill is a git checkout with a remote; marketplace copies have no upstream.
+`link` keeps one canonical copy (preferring `~/.agents/skills`) and points the other agent directories at it. `adopt` solves the orphan problem: marketplace copies have no recorded upstream, so `adopt` hashes every installed skill, matches it against known public repos (Anthropic skills, Vercel agent-skills, superpowers; add more with `--repo`), and records the provenance. From then on `skillint update` batch-checks them and `--apply` batch-updates them — with the old version quarantined, so `skillint restore` still undoes it. Name-only matches are listed for human review, never auto-updated.
+
+## Fix broken skills
+
+Some installed skills are invisible to agents because their metadata is broken — often just a trailing space after `---`:
+
+```bash
+npx skillint fix                  # dry run: shows recovered names/descriptions
+npx skillint fix --apply          # rewrite; originals go to the trash first
+```
+
+`fix` recovers frontmatter written without `---` markers, normalizes sloppy delimiters, and drafts missing names (from the folder) and descriptions (from the first paragraph). The whole engine also *tolerates* sloppy delimiters when scanning, so scores reflect reality: on the machine this was built against, that tolerance alone revived 8 "dead" skills and raised the health score from 10 to 42.
+
+## HTML dashboard and badge
+
+```bash
+npx skillint report --html        # skillint-report.html, single file, no dependencies
+npx skillint badge                # skills-health.svg + a ready-to-paste embed line
+```
+
+The dashboard has a health gauge, per-source bars, and filterable findings/security/cleanup tables — send it to a teammate or attach it to a PR. The badge is shields-style and score-colored for READMEs and dotfiles repos.
 
 ## Agent-aware map
 

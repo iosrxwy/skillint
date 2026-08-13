@@ -9,6 +9,21 @@ export { scanSecurity, scanText } from "./security.js";
 export { buildRows, fit, initialState, reduce, renderFrame, runTui, TABS, tabCounts } from "./tui.js";
 export { listBatches, quarantine, restoreBatch, restoreLast, trashCommand, trashRoot } from "./trash.js";
 export { buildMenu, buildSummary, detectLang, runWizard, wizardCounts } from "./wizard.js";
+export {
+  DEFAULT_REGISTRY_REPOS,
+  adoptSkills,
+  applyAdopted,
+  checkAdopted,
+  collectRegistrySkills,
+  readSources,
+  registryRoot,
+  sourcesPath,
+  syncRegistry,
+  writeSources,
+} from "./registry.js";
+export { applyFix, draftDescription, planFix, recoverBareHeader, sanitizeName } from "./fix.js";
+export { renderBadge } from "./badge.js";
+export { formatHtmlReport } from "./html.js";
 export { applyLinkPlan, applyUpdates, checkUpdates, planLink, resolveLinkPlan } from "./manage.js";
 export { collapseDeletePaths, deleteTarget, isBackup, planPrune } from "./prune.js";
 export { formatReport } from "./report.js";

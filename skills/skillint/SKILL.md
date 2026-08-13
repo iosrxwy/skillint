@@ -17,9 +17,12 @@ npx skillint audit
 npx skillint ui
 npx skillint tokens
 npx skillint prune
-npx skillint prune --script
+npx skillint fix
+npx skillint adopt
 npx skillint link
 npx skillint update
+npx skillint report --html
+npx skillint badge
 ```
 
 ## Rules

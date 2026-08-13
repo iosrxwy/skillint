@@ -348,19 +348,22 @@ export function formatUpdate(
   options: { max?: number; applied?: { updated: number; skipped: number } } = {},
 ): string {
   const max = options.max ?? 20;
+  const adopted = checks.filter((item) => item.manager === "adopted");
   const git = checks.filter(
-    (item) => item.status !== "not-git" && item.status !== "lockfile",
+    (item) => item.manager !== "adopted" && item.status !== "not-git" && item.status !== "lockfile",
   );
   const behind = checks.filter((item) => item.status === "behind");
   const lockfile = checks.filter((item) => item.status === "lockfile");
-  const noRemote = checks.filter((item) => item.status === "no-remote" || item.status === "not-git");
+  const noRemote = checks.filter(
+    (item) => item.manager !== "adopted" && (item.status === "no-remote" || item.status === "not-git"),
+  );
   const lines = [
-    pc.bold("skillint update · git-backed skills"),
+    pc.bold("skillint update · upstream check"),
     "",
-    pc.dim("One-click update only works when a skill directory is a git checkout with a remote."),
-    pc.dim("Plain copies have no upstream. Link them first, then edit the canonical copy once."),
+    pc.dim("Covers git checkouts and skills adopted with `skillint adopt`."),
+    pc.dim("Orphan copies have no recorded upstream; run `skillint adopt` to match them first."),
     "",
-    `checked ${n(checks.length)}  git ${n(git.length)}  behind ${n(behind.length)}  skills-cli ${n(lockfile.length)}  no upstream ${n(noRemote.length)}`,
+    `checked ${n(checks.length)}  git ${n(git.length)}  adopted ${n(adopted.length)}  behind ${n(behind.length)}  skills-cli ${n(lockfile.length)}  no upstream ${n(noRemote.length)}`,
   ];
   if (lockfile.length) {
     lines.push(pc.dim("Skills installed by the skills CLI: update with `npx skills update <name>`."));
@@ -373,10 +376,11 @@ export function formatUpdate(
   if (shown.length) {
     lines.push("", pc.bold("Needs attention"));
     for (const item of shown) {
-      lines.push(`  ${item.status.padEnd(12)} ${item.name}  ${pc.dim(item.path)}`);
+      const tag = item.manager === "adopted" ? pc.cyan(" [adopted]") : "";
+      lines.push(`  ${item.status.padEnd(12)} ${item.name}${tag}  ${pc.dim(item.path)}`);
     }
   } else {
-    lines.push("", pc.dim("Nothing to pull. Marketplace copies without git remotes cannot be auto-updated."));
+    lines.push("", pc.dim("Nothing to pull. Run `skillint adopt` to match orphan copies to known repos."));
   }
   if (!options.applied && behind.length) {
     lines.push("", pc.dim("Dry run only. Pass --apply to `git pull --ff-only` behind checkouts."));
