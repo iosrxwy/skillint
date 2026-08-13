@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.0 — 2026-08-13
+
+- Make the checkup report concrete: named examples per category, security hits with file:line excerpts, wasted-token totals, and a full-context-window equivalence
+- Collapse the menu into one-key "fix everything safe" (trash junk + share copies in a single undoable step)
+- Show the health score before → after every fix, then point at `skillint restore`
+- Add checkup screenshots to the README (English and Chinese)
+
 ## 0.13.0 — 2026-08-13
 
 - Make bare `skillint` a guided checkup: scan, explain problems in plain language, then offer numbered one-key fixes

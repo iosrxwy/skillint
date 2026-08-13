@@ -43,6 +43,10 @@ npx skillint
 
 In a terminal this runs a guided checkup: it scans every agent's skills, explains the problems in plain language (localized, including Chinese), and offers numbered fixes — recycle-bin cleanup, security findings, symlink sharing, or the interactive UI. Every write is undoable with `skillint restore`. Without a TTY (CI, pipes) the same command prints the classic scan inventory.
 
+<p align="center">
+  <img src="https://cdn.jsdelivr.net/gh/iosrxwy/skillint@main/docs/checkup-light.svg" alt="skillint guided checkup: plain-language findings with numbered undoable fixes" width="720">
+</p>
+
 The audit path is static and read-only: scanned skills are parsed as text and never executed. `scan`, `map`, `doctor`, `audit`, and `tokens` do not modify the catalog. `prune --apply`, `trash`, `link --apply`, and `update --apply` are explicit, undoable writes.
 
 ## What it solves

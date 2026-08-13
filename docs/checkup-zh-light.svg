@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">skillint 一键体检</title>
+  <desc id="desc">直接运行 skillint：自动扫描所有 Agent 的 skills，用大白话说明问题，并给出可撤销的编号修复选项。</desc>
+  <rect width="960" height="640" rx="28" fill="#F1F4FC"/>
+  <rect x="24" y="24" width="912" height="592" rx="20" fill="#FFFFFF" stroke="#D8E1F0" stroke-width="2"/>
+  <path d="M24 82h912" stroke="#E4EAF3"/>
+  <circle cx="54" cy="54" r="6" fill="#F37D68"/>
+  <circle cx="76" cy="54" r="6" fill="#F3B74F"/>
+  <circle cx="98" cy="54" r="6" fill="#47C7A3"/>
+  <text x="124" y="59" fill="#8294A6" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">一键体检 / 一条命令</text>
+  <rect x="818" y="40" width="88" height="28" rx="14" fill="#E8F8F3"/>
+  <circle cx="836" cy="54" r="4" fill="#47C7A3"/>
+  <text x="849" y="58" fill="#216A58" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="700">可撤销</text>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+    <text x="52" y="120" fill="#3B66F0" font-weight="700">$</text>
+    <text x="72" y="120" fill="#16324A">npx skillint</text>
+    <text x="52" y="158" fill="#16324A" font-size="17" font-weight="760">skillint 体检报告</text>
+    <rect x="240" y="146" width="120" height="12" rx="6" fill="#F3D9D3"/>
+    <rect x="240" y="146" width="14" height="12" rx="6" fill="#E0533D"/>
+    <text x="372" y="158" fill="#B03A28" font-weight="700">10/100</text>
+    <text x="52" y="190" fill="#8294A6">已安装 1,658 个 skill · 全部载入约 3,424,092 token（约 27 个完整上下文窗口）</text>
+    <text x="52" y="228" fill="#E0533D" font-weight="700">&#9679; 22 个重复/备份垃圾 · 浪费约 480,000 token</text>
+    <text x="76" y="252" fill="#556B80">pua.bak-20260613            备份/残留副本</text>
+    <text x="76" y="276" fill="#556B80">brand-guidelines-community  与 brand-guidelines-anthropic 完全相同</text>
+    <text x="76" y="300" fill="#8294A6">… 还有 20 个 · 随时 skillint restore 撤销</text>
+    <text x="52" y="338" fill="#B57E0A" font-weight="700">&#9650; 13 处高危 + 54 处需留意的安全风险</text>
+    <text x="76" y="362" fill="#556B80">bun-development:33           curl -fsSL https://bun.sh/install | bash</text>
+    <text x="76" y="386" fill="#556B80">cloud-penetration-testing:34  curl https://sdk.cloud.google.com | bash</text>
+    <text x="52" y="424" fill="#B57E0A" font-weight="700">&#9650; 157 个超长 skill · 最大的是 computer-use-agents（约 16,745 token）</text>
+    <text x="52" y="456" fill="#8294A6" font-weight="700">&#9675; 44 个相同副本被装进了多个工具</text>
+    <text x="52" y="496" fill="#16324A" font-weight="760">现在要做什么？</text>
+    <text x="64" y="522" fill="#2563EB">1)</text>
+    <text x="94" y="522" fill="#16324A">一键修复：清 22 个垃圾 + 共享 44 个副本（可撤销）</text>
+    <text x="64" y="546" fill="#2563EB">2)</text>
+    <text x="94" y="546" fill="#16324A">看安全风险详情</text>
+    <text x="64" y="570" fill="#2563EB">3)</text>
+    <text x="94" y="570" fill="#16324A">打开交互界面慢慢看</text>
+    <text x="64" y="594" fill="#2563EB">q)</text>
+    <text x="94" y="594" fill="#8294A6">什么都不做，退出</text>
+  </g>
+</svg>

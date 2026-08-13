@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="640" viewBox="0 0 960 640" role="img" aria-labelledby="title desc">
+  <title id="title">skillint guided checkup</title>
+  <desc id="desc">Running bare skillint scans every agent, explains problems in plain language, and offers numbered undoable fixes.</desc>
+  <rect width="960" height="640" rx="28" fill="#F1F4FC"/>
+  <rect x="24" y="24" width="912" height="592" rx="20" fill="#FFFFFF" stroke="#D8E1F0" stroke-width="2"/>
+  <path d="M24 82h912" stroke="#E4EAF3"/>
+  <circle cx="54" cy="54" r="6" fill="#F37D68"/>
+  <circle cx="76" cy="54" r="6" fill="#F3B74F"/>
+  <circle cx="98" cy="54" r="6" fill="#47C7A3"/>
+  <text x="124" y="59" fill="#8294A6" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13">guided checkup / one command</text>
+  <rect x="818" y="40" width="88" height="28" rx="14" fill="#E8F8F3"/>
+  <circle cx="836" cy="54" r="4" fill="#47C7A3"/>
+  <text x="849" y="58" fill="#216A58" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="700">UNDOABLE</text>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="14">
+    <text x="52" y="120" fill="#3B66F0" font-weight="700">$</text>
+    <text x="72" y="120" fill="#16324A">npx skillint</text>
+
+    <text x="52" y="158" fill="#16324A" font-size="17" font-weight="760">skillint checkup</text>
+    <rect x="230" y="146" width="120" height="12" rx="6" fill="#F3D9D3"/>
+    <rect x="230" y="146" width="14" height="12" rx="6" fill="#E0533D"/>
+    <text x="362" y="158" fill="#B03A28" font-weight="700">10/100</text>
+
+    <text x="52" y="190" fill="#8294A6">1,658 skills - loading everything is ~3,424,092 tokens (~27 full context windows)</text>
+
+    <text x="52" y="228" fill="#E0533D" font-weight="700">&#9679; 22 duplicates and backups - ~480,000 wasted tokens</text>
+    <text x="76" y="252" fill="#556B80">pua.bak-20260613          backup or leftover copy</text>
+    <text x="76" y="276" fill="#556B80">brand-guidelines-community  same body as brand-guidelines-anthropic</text>
+    <text x="76" y="300" fill="#8294A6">... and 20 more - undo any time with `skillint restore`</text>
+
+    <text x="52" y="338" fill="#B57E0A" font-weight="700">&#9650; 13 high-risk + 54 lower-risk security findings</text>
+    <text x="76" y="362" fill="#556B80">bun-development:33           curl -fsSL https://bun.sh/install | bash</text>
+    <text x="76" y="386" fill="#556B80">cloud-penetration-testing:34  curl https://sdk.cloud.google.com | bash</text>
+
+    <text x="52" y="424" fill="#B57E0A" font-weight="700">&#9650; 157 oversized skills - biggest: computer-use-agents (~16,745 tokens)</text>
+    <text x="52" y="456" fill="#8294A6" font-weight="700">&#9675; 44 identical copies installed for several agents</text>
+
+    <text x="52" y="496" fill="#16324A" font-weight="760">What do you want to do?</text>
+    <text x="64" y="522" fill="#2563EB">1)</text>
+    <text x="94" y="522" fill="#16324A">fix everything safe: trash 22 junk items, share 44 copies (undoable)</text>
+    <text x="64" y="546" fill="#2563EB">2)</text>
+    <text x="94" y="546" fill="#16324A">show the security findings in detail</text>
+    <text x="64" y="570" fill="#2563EB">3)</text>
+    <text x="94" y="570" fill="#16324A">browse everything interactively</text>
+    <text x="64" y="594" fill="#2563EB">q)</text>
+    <text x="94" y="594" fill="#8294A6">do nothing and exit</text>
+  </g>
+</svg>

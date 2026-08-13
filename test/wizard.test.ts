@@ -59,15 +59,19 @@ describe("wizard", () => {
     expect(counts).toEqual({ skills: 2, junk: 1, risky: 1, oversized: 1, shareable: 1 });
   });
 
-  it("renders a plain-language summary in Chinese and English", () => {
+  it("renders a rich summary with examples in Chinese and English", () => {
     const data = fixture();
     const zh = buildSummary(data, "zh");
     expect(zh).toContain("体检报告");
     expect(zh).toContain("1 个重复/备份垃圾");
-    expect(zh).toContain("1 个安全风险");
+    expect(zh).toContain("alpha");
+    expect(zh).toContain(":3");
+    expect(zh).toContain("curl | bash");
+    expect(zh).toContain("完整上下文窗口");
     const en = buildSummary(data, "en");
     expect(en).toContain("skillint checkup");
-    expect(en).toContain("1 duplicates/backups");
+    expect(en).toContain("duplicates and backups");
+    expect(en).toContain("full context windows");
   });
 
   it("shows a healthy message when nothing is wrong", () => {
@@ -82,10 +86,11 @@ describe("wizard", () => {
     expect(menu.map((item) => item.action)).toEqual(["ui", "quit"]);
   });
 
-  it("numbers menu options only for present problems", () => {
+  it("offers a combined one-key fix plus audit details", () => {
     const menu = buildMenu(fixture(), "zh");
-    expect(menu.map((item) => item.action)).toEqual(["clean", "audit", "share", "ui", "quit"]);
+    expect(menu.map((item) => item.action)).toEqual(["fix", "audit", "ui", "quit"]);
     expect(menu[0].key).toBe("1");
+    expect(menu[0].label).toContain("一键修复");
     expect(menu.at(-1)?.key).toBe("q");
   });
 

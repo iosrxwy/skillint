@@ -41,6 +41,10 @@ npx skillint
 
 在终端里这一条命令就是「一键体检」：自动扫描所有 Agent 的 skills，用大白话（中文环境显示中文）告诉你有什么问题，然后给出编号选项——清进回收站、看安全风险、共享重复副本、或打开交互界面。所有写操作都能用 `skillint restore` 撤销。在 CI 或管道里（无终端交互）则输出经典的清单报告。
 
+<p align="center">
+  <img src="docs/checkup-zh-light.svg" alt="skillint 一键体检：大白话报告 + 可撤销的编号修复" width="720">
+</p>
+
 审计链路默认是静态、只读的：skill 只会被当作文本解析，绝不会被执行。`scan`、`map`、`doctor`、`audit`、`tokens` 不修改目录；`prune --apply`、`trash`、`link --apply`、`update --apply` 是显式且可撤销的写操作。
 
 ## 它解决什么

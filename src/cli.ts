@@ -30,7 +30,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.13.0";
+    return "0.14.0";
   }
 }
 
