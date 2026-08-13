@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.0 — 2026-08-13
+
+- Make bare `skillint` a guided checkup: scan, explain problems in plain language, then offer numbered one-key fixes
+- Speak the user's language: the checkup localizes to Chinese when the shell locale is zh
+- Offer safe actions only — recycle-bin cleanup, security findings, symlink sharing, or the interactive UI — every write undoable
+- Keep CI behavior stable: without a TTY, bare `skillint` prints the classic scan inventory
+- `skillint scan` is unchanged; the checkup is only the new default for humans
+
 ## 0.12.0 — 2026-08-13
 
 - Remove `rm -rf` from every suggestion: cleanup now quarantines into `~/.skillint/trash/<timestamp>/` with a manifest

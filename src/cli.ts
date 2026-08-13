@@ -19,6 +19,7 @@ import { planPrune } from "./prune.js";
 import { scanSecurity } from "./security.js";
 import { quarantine, restoreLast, trashRoot } from "./trash.js";
 import { runTui } from "./tui.js";
+import { runWizard } from "./wizard.js";
 import { collapseDeletePaths } from "./prune.js";
 import { formatReport } from "./report.js";
 import type { Agent } from "./types.js";
@@ -29,7 +30,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.12.0";
+    return "0.13.0";
   }
 }
 
@@ -97,10 +98,16 @@ program
   .description("Static analysis for AI agent skills used by Codex, Cursor, Claude Code, Grok, Gemini, Copilot, and others")
   .version(packageVersion())
   .showHelpAfterError()
+  .argument("[paths...]", "optional extra directories to check")
+  .action(async (paths: string[]) => {
+    const parsed = await parseRoots(paths, {});
+    await runWizard(parsed);
+  })
   .addHelpText(
     "after",
     `
 Examples:
+  $ skillint              guided checkup: scan, explain, offer fixes
   $ skillint scan
   $ skillint map --agent cursor
   $ skillint doctor -g
@@ -123,7 +130,7 @@ Exit codes:
 
 withScanOptions(
   program
-    .command("scan", { isDefault: true })
+    .command("scan")
     .description("Inventory skill/rule files and estimate their size (not effective loading)"),
 ).action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; annotate?: boolean }) => {
   const started = Date.now();
