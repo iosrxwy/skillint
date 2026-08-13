@@ -2,6 +2,7 @@ import { homedir } from "node:os";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { readdir, readFile, stat } from "node:fs/promises";
 import { asBoolean, asString, estimateTokens, parseFrontmatter } from "./frontmatter.js";
+import { isIgnored } from "./ignore.js";
 import type { Kind, ScanResult, SkillFile, Source } from "./types.js";
 
 const SKILL_NAMES = new Set(["skill.md"]);
@@ -19,6 +20,7 @@ export interface DiscoverOptions {
   extraRoots?: string[];
   project?: boolean;
   global?: boolean;
+  ignore?: string[];
 }
 
 function homeRoots(home: string): Array<{ root: string; source: Source }> {
@@ -125,6 +127,7 @@ async function toSkillFile(
   const description = asString(data.description);
   const alwaysApply = asBoolean(data.alwaysApply) || asBoolean(data["always-apply"]);
   const metaText = `${name}\n${description}`;
+  const trimmedBody = body.trim();
 
   return {
     path: filePath,
@@ -135,7 +138,8 @@ async function toSkillFile(
     alwaysApply,
     bytes: info.size,
     mtimeMs: info.mtimeMs,
-    bodyChars: body.trim().length,
+    bodyChars: trimmedBody.length,
+    bodyLines: raw.split(/\r?\n/).length,
     metaTokens: estimateTokens(metaText),
     bodyTokens: estimateTokens(body),
   };
@@ -154,6 +158,7 @@ export async function discover(options: DiscoverOptions = {}): Promise<ScanResul
     candidates.push({ root: resolve(extra), source: "custom" });
   }
 
+  const ignore = options.ignore ?? [];
   const seenRoots = new Set<string>();
   const roots: string[] = [];
   const files: SkillFile[] = [];
@@ -168,6 +173,7 @@ export async function discover(options: DiscoverOptions = {}): Promise<ScanResul
     const paths = await walkFiles(root, source, cwd);
     for (const filePath of paths) {
       if (seenFiles.has(filePath)) continue;
+      if (isIgnored(filePath, ignore)) continue;
       const kind = classify(filePath, root, source);
       if (!kind) continue;
       seenFiles.add(filePath);

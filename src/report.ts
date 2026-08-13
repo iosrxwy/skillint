@@ -9,8 +9,9 @@ export function formatReport(input: {
   result: ScanResult;
   summary: TokenSummary;
   findings: Finding[];
+  health?: { score: number; label: string };
 }): string {
-  const { generatedAt, result, summary, findings } = input;
+  const { generatedAt, result, summary, findings, health } = input;
   const errors = findings.filter((item) => item.severity === "error");
   const warnings = findings.filter((item) => item.severity === "warning");
   const infos = findings.filter((item) => item.severity === "info");
@@ -29,6 +30,7 @@ export function formatReport(input: {
     `| Files | ${n(summary.files)} |`,
     `| Skills | ${n(summary.skills)} |`,
     `| Rules | ${n(summary.rules)} |`,
+    `| Health | ${health ? `${health.score}/100 ${health.label}` : "n/a"} |`,
     `| Metadata tokens (est.) | ${n(summary.metaTokens)} |`,
     `| Body tokens (est.) | ${n(summary.bodyTokens)} |`,
     `| Always-on rule tokens (est.) | ${n(summary.alwaysOnTokens)} |`,

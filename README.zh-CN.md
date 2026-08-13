@@ -44,10 +44,12 @@
 ## 功能
 
 - **盘点**：扫描 Codex / Cursor / Claude Code / 项目根目录中的 skills 与 rules
+- **健康分**：0–100，根据 doctor 结果和目录规模打分
 - **Token 预算**：估算元数据成本 vs 全文加载成本（`字符数 / 4`）
-- **Doctor**：重名、缺 description、体积过大、always-on 规则膨胀
+- **Doctor**：重名、缺/过短/第一人称 description、体积过大、过长的 AGENTS.md
 - **精简建议**：按优先级给出保留 / 拿掉列表，不改动磁盘
 - **Markdown 报告**：适合放进 PR 和 CI 产物
+- **GitHub Action**：`uses: iosrxwy/skillint@v0.3.0`
 - **JSON**：所有命令都支持 `--json`
 
 ## 安装
@@ -111,6 +113,16 @@ Agent 不需要三百万 token 的 skills。
 | 项目根目录 | `AGENTS.md`、`CLAUDE.md`、`GEMINI.md`、`.cursorrules`、`.github/copilot-instructions.md` |
 
 Token 是估算值，用来比较体积，不是各家官方 tokenizer，不能用来对账。
+
+## GitHub Action
+
+```yaml
+- uses: iosrxwy/skillint@v0.3.0
+  with:
+    fail-on: error
+```
+
+忽略规则可写在 `.skillintignore`，或使用 `--ignore`。
 
 ## License
 

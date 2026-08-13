@@ -1,0 +1,37 @@
+name: skillint
+description: Audit agent skills and AGENTS.md for duplicates, missing metadata, and context bloat
+author: iosrxwy
+branding:
+  icon: search
+  color: purple
+inputs:
+  paths:
+    description: Directories to scan. Defaults to the current project.
+    required: false
+    default: ""
+  fail-on:
+    description: Exit 1 when findings reach this severity (error or warning)
+    required: false
+    default: error
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+    - name: Install skillint
+      shell: bash
+      run: |
+        npm install --prefix "$GITHUB_ACTION_PATH"
+        npm run build --prefix "$GITHUB_ACTION_PATH"
+    - name: Run skillint doctor
+      shell: bash
+      env:
+        SKILLINT_PATHS: ${{ inputs.paths }}
+        SKILLINT_FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        if [ -n "$SKILLINT_PATHS" ]; then
+          node "$GITHUB_ACTION_PATH/dist/cli.js" doctor $SKILLINT_PATHS --fail-on "$SKILLINT_FAIL_ON"
+        else
+          node "$GITHUB_ACTION_PATH/dist/cli.js" doctor -p --fail-on "$SKILLINT_FAIL_ON"
+        fi

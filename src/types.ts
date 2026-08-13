@@ -22,6 +22,7 @@ export interface SkillFile {
   bytes: number;
   mtimeMs: number;
   bodyChars: number;
+  bodyLines: number;
   metaTokens: number;
   bodyTokens: number;
 }
@@ -36,7 +37,10 @@ export type FindingCode =
   | "oversized"
   | "name-folder-mismatch"
   | "description-too-long"
-  | "always-on-bloat";
+  | "description-too-short"
+  | "description-first-person"
+  | "always-on-bloat"
+  | "agents-doc-too-long";
 
 export interface Finding {
   code: FindingCode;

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { discover } from "../src/discover.js";
-import { doctor, summarizeTokens } from "../src/doctor.js";
+import { doctor, healthScore, summarizeTokens } from "../src/doctor.js";
 import { parseFrontmatter } from "../src/frontmatter.js";
 import { planPrune } from "../src/prune.js";
 
@@ -18,7 +18,7 @@ async function fixtureRoot(): Promise<string> {
     join(root, "ok-skill", "SKILL.md"),
     `---
 name: ok-skill
-description: A healthy example skill used in tests.
+description: A healthy example skill used in unit tests for skillint.
 ---
 
 # OK
@@ -111,6 +111,45 @@ describe("discover / doctor / prune", () => {
     expect(summary.skills).toBe(4);
     expect(summary.rules).toBe(1);
     expect(summary.metaTokens).toBeGreaterThan(0);
+  });
+
+  it("ignores matching paths", async () => {
+    const root = await fixtureRoot();
+    const result = await discover({
+      extraRoots: [root],
+      global: false,
+      project: false,
+      ignore: ["empty-skill"],
+    });
+    expect(result.files.some((file) => file.path.includes("empty-skill"))).toBe(false);
+    expect(result.files.some((file) => file.name === "ok-skill")).toBe(true);
+  });
+
+  it("flags first-person skill descriptions", async () => {
+    const root = await fixtureRoot();
+    await mkdir(join(root, "voice"), { recursive: true });
+    await writeFile(
+      join(root, "voice", "SKILL.md"),
+      `---
+name: voice
+description: I can help you write better commit messages when you ask.
+---
+
+Body
+`,
+    );
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const findings = doctor(result.files);
+    expect(findings.some((item) => item.code === "description-first-person")).toBe(true);
+  });
+
+  it("groups duplicate names into a single finding", async () => {
+    const root = await fixtureRoot();
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const dupes = doctor(result.files).filter((item) => item.code === "duplicate-name");
+    expect(dupes).toHaveLength(1);
+    const health = healthScore(result.files, doctor(result.files));
+    expect(health.score).toBeLessThan(100);
   });
 
   it("suggests prune without deleting anything", async () => {

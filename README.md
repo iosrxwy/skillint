@@ -46,10 +46,12 @@ That catalog only works when it is **small, named, and described**. A workstatio
 ## Features
 
 - **Inventory** — discover skills and rules across Codex, Cursor, Claude Code, and project roots
+- **Health score** — 0–100 catalog score from doctor findings and catalog size
 - **Token budget** — estimate metadata cost vs full-body cost (`characters / 4`)
-- **Doctor** — duplicate names, missing descriptions, oversized files, always-on rule bloat
+- **Doctor** — duplicates, missing/short/first-person descriptions, oversized files, long AGENTS.md
 - **Prune plan** — ranked keep/drop suggestions; never mutates the filesystem
 - **Markdown report** — CI-friendly artifact for pull requests and maintainer review
+- **GitHub Action** — `uses: iosrxwy/skillint@v0.3.0` on any public repo
 - **JSON output** — every command supports `--json`
 
 ## Install
@@ -100,16 +102,11 @@ From a developer machine with a large local skill library:
 skillint scan
 
 6 roots · 1,553 skills · 10 rules
+health 0/100  critical
 
 Context cost
   metadata (name + description):  ~68,792 tokens
   all bodies if fully loaded:     ~3,344,017 tokens
-  always-on rules:                ~0 tokens
-
-By source
-  cursor-global     1460 files   meta ~62,297   body ~3,207,601
-  agents-global       69 files   meta ~4,517    body ~84,270
-  codex-global        32 files   meta ~1,863    body ~43,011
 ```
 
 `skillint doctor` on the same machine: **233 findings** (60 duplicate names, 152 oversized files, 20 missing descriptions).
@@ -127,6 +124,42 @@ An agent does not need three million tokens of skills.
 | Project root | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` |
 
 Token counts are **estimates**, not a vendor tokenizer. Use them to compare size, not to bill APIs.
+
+## GitHub Action
+
+```yaml
+name: skillint
+on: [push, pull_request]
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: iosrxwy/skillint@v0.3.0
+        with:
+          fail-on: error
+```
+
+## Ignore patterns
+
+Create `.skillintignore` in the working directory, or pass `--ignore`:
+
+```bash
+skillint doctor --ignore vendor --ignore "*.bak"
+```
+
+## How it works
+
+```mermaid
+flowchart LR
+  A[Skill folders] --> B[discover]
+  B --> C[doctor]
+  C --> D[health score]
+  C --> E[report / JSON / CI]
+  B --> F[token budget]
+```
+
+skillint only reads files. It never executes a skill and never deletes one.
 
 ## CI
 

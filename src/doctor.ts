@@ -1,8 +1,13 @@
+import { basename } from "node:path";
 import type { Finding, SkillFile, TokenSummary } from "./types.js";
 
 const SKILL_BODY_LIMIT = 4000;
 const RULE_ALWAYS_ON_LIMIT = 800;
 const DESCRIPTION_LIMIT = 1024;
+const DESCRIPTION_MIN = 40;
+const AGENTS_LINE_LIMIT = 100;
+const FIRST_PERSON = /^(i |i'm |i am |i can |i will )/i;
+const AGENT_DOCS = new Set(["agents.md", "claude.md", "gemini.md"]);
 
 export function summarizeTokens(files: SkillFile[]): TokenSummary {
   const bySource: TokenSummary["bySource"] = {};
@@ -34,6 +39,22 @@ export function summarizeTokens(files: SkillFile[]): TokenSummary {
   return summary;
 }
 
+export function healthScore(files: SkillFile[], findings: Finding[]): { score: number; label: string } {
+  let score = 100;
+  const errors = findings.filter((item) => item.severity === "error").length;
+  const warnings = findings.filter((item) => item.severity === "warning").length;
+  const skills = files.filter((file) => file.kind === "skill").length;
+
+  score -= Math.min(40, errors * 4);
+  score -= Math.min(30, warnings);
+  if (skills > 200) score -= 10;
+  if (skills > 800) score -= 10;
+  score = Math.max(0, Math.min(100, score));
+
+  const label = score >= 85 ? "healthy" : score >= 60 ? "fair" : score >= 40 ? "poor" : "critical";
+  return { score, label };
+}
+
 export function doctor(files: SkillFile[]): Finding[] {
   const findings: Finding[] = [];
   const byName = new Map<string, SkillFile[]>();
@@ -60,13 +81,30 @@ export function doctor(files: SkillFile[]): Finding[] {
         message: `${file.kind === "skill" ? "Skill" : "Rule"} is missing a description`,
         path: file.path,
       });
-    } else if (file.description.length > DESCRIPTION_LIMIT) {
-      findings.push({
-        code: "description-too-long",
-        severity: "warning",
-        message: `Description is ${file.description.length} chars (limit ${DESCRIPTION_LIMIT})`,
-        path: file.path,
-      });
+    } else {
+      if (file.description.length > DESCRIPTION_LIMIT) {
+        findings.push({
+          code: "description-too-long",
+          severity: "warning",
+          message: `Description is ${file.description.length} chars (limit ${DESCRIPTION_LIMIT})`,
+          path: file.path,
+        });
+      } else if (file.kind === "skill" && file.description.length < DESCRIPTION_MIN) {
+        findings.push({
+          code: "description-too-short",
+          severity: "warning",
+          message: `Description is ${file.description.length} chars (keep at least ${DESCRIPTION_MIN})`,
+          path: file.path,
+        });
+      }
+      if (file.kind === "skill" && FIRST_PERSON.test(file.description)) {
+        findings.push({
+          code: "description-first-person",
+          severity: "info",
+          message: "Description should be third person so agents can inject it into a system prompt",
+          path: file.path,
+        });
+      }
     }
 
     if (file.bodyChars === 0) {
@@ -96,6 +134,15 @@ export function doctor(files: SkillFile[]): Finding[] {
       });
     }
 
+    if (file.kind === "rule" && AGENT_DOCS.has(basename(file.path).toLowerCase()) && file.bodyLines > AGENTS_LINE_LIMIT) {
+      findings.push({
+        code: "agents-doc-too-long",
+        severity: "warning",
+        message: `${basename(file.path)} is ${file.bodyLines} lines (keep under ${AGENTS_LINE_LIMIT})`,
+        path: file.path,
+      });
+    }
+
     if (file.kind === "skill") {
       const folder = file.path.split(/[/\\]/).slice(-2, -1)[0] ?? "";
       if (folder && folder !== "." && folder.toLowerCase() !== file.name.toLowerCase()) {
@@ -111,19 +158,16 @@ export function doctor(files: SkillFile[]): Finding[] {
 
   for (const [name, list] of byName) {
     if (list.length < 2) continue;
-    const paths = list.map((item) => item.path).join(", ");
-    for (const file of list) {
-      findings.push({
-        code: "duplicate-name",
-        severity: "error",
-        message: `Duplicate name "${name}" found ${list.length} times`,
-        path: file.path,
-        extra: paths,
-      });
-    }
+    findings.push({
+      code: "duplicate-name",
+      severity: "error",
+      message: `Duplicate name "${name}" found ${list.length} times`,
+      path: list[0].path,
+      extra: list.map((item) => item.path).join(", "),
+    });
   }
 
   const rank = { error: 0, warning: 1, info: 2 };
-  findings.sort((a, b) => rank[a.severity] - rank[b.severity] || a.path.localeCompare(b.path));
+  findings.sort((a, b) => rank[a.severity] - rank[b.severity] || a.code.localeCompare(b.code) || a.path.localeCompare(b.path));
   return findings;
 }
