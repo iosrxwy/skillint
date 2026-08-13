@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -159,6 +159,53 @@ Body
     expect(plan.keep.length).toBeLessThanOrEqual(2);
     expect(plan.drop.length).toBeGreaterThan(0);
     expect(plan.keep.every((file) => result.files.some((item) => item.path === file.path))).toBe(true);
+  });
+
+  it("discovers Grok, Gemini, and Copilot skill folders", async () => {
+    const home = await mkdtemp(join(tmpdir(), "skillint-home-"));
+    const grokDir = join(home, ".grok", "skills", "grok-demo");
+    const geminiDir = join(home, ".gemini", "skills", "gemini-demo");
+    const copilotDir = join(home, ".copilot", "skills", "copilot-demo");
+    await mkdir(grokDir, { recursive: true });
+    await mkdir(geminiDir, { recursive: true });
+    await mkdir(copilotDir, { recursive: true });
+    const body = `---
+name: demo-skill
+description: A portable agent skill used to verify extra discovery roots.
+---
+
+Body
+`;
+    await writeFile(join(grokDir, "SKILL.md"), body.replace("demo-skill", "grok-demo"));
+    await writeFile(join(geminiDir, "SKILL.md"), body.replace("demo-skill", "gemini-demo"));
+    await writeFile(join(copilotDir, "SKILL.md"), body.replace("demo-skill", "copilot-demo"));
+
+    const result = await discover({ home, cwd: home, global: true, project: false });
+    expect(result.files.some((file) => file.source === "grok-global" && file.name === "grok-demo")).toBe(true);
+    expect(result.files.some((file) => file.source === "gemini-global" && file.name === "gemini-demo")).toBe(true);
+    expect(result.files.some((file) => file.source === "copilot-global" && file.name === "copilot-demo")).toBe(true);
+  });
+
+  it("follows Grok skill directory symlinks", async () => {
+    const home = await mkdtemp(join(tmpdir(), "skillint-symlink-"));
+    const realDir = join(home, ".agents", "skills", "linked-skill");
+    const grokLink = join(home, ".grok", "skills", "linked-skill");
+    await mkdir(realDir, { recursive: true });
+    await mkdir(join(home, ".grok", "skills"), { recursive: true });
+    await writeFile(
+      join(realDir, "SKILL.md"),
+      `---
+name: linked-skill
+description: A skill reached through a Grok directory symlink for discovery tests.
+---
+
+Body
+`,
+    );
+    await symlink(realDir, grokLink);
+
+    const result = await discover({ home, cwd: home, global: true, project: false });
+    expect(result.files.some((file) => file.source === "grok-global" && file.name === "linked-skill")).toBe(true);
   });
 });
 

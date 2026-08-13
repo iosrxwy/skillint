@@ -16,7 +16,7 @@
 <p align="center"><b>AI Agent Skills 的静态分析工具。</b></p>
 
 <p align="center">
-  检查 Codex、Cursor、Claude Code 使用的 <code>SKILL.md</code>、<code>AGENTS.md</code> 和编辑器规则。
+  检查 Codex、Cursor、Claude Code、Grok、Gemini、Copilot 等工具使用的 <code>SKILL.md</code>、<code>AGENTS.md</code> 和编辑器规则。
   在它们进入提示词之前，找出重名、缺元数据、以及会撑爆上下文的文件。
 </p>
 
@@ -43,7 +43,7 @@
 
 ## 功能
 
-- **盘点**：扫描 Codex / Cursor / Claude Code / 项目根目录中的 skills 与 rules
+- **盘点**：扫描 Codex / Cursor / Claude Code / Grok / Gemini / Copilot / 项目根目录中的 skills 与 rules
 - **健康分**：0–100，根据 doctor 结果和目录规模打分
 - **Token 预算**：估算元数据成本 vs 全文加载成本（`字符数 / 4`）
 - **Doctor**：重名、缺/过短/第一人称 description、体积过大、过长的 AGENTS.md
@@ -104,13 +104,22 @@ Agent 不需要三百万 token 的 skills。
 
 ## 扫描范围
 
-| 工具 | 路径 |
-| --- | --- |
-| Cursor | `~/.cursor/skills`、`.cursor/skills`、`.cursor/rules` |
-| Claude Code | `~/.claude/skills`、`.claude/skills` |
-| Codex | `~/.codex/skills`、`.codex/skills` |
-| 通用 | `~/.agents/skills`、`.agents/skills`、`skills/` |
-| 项目根目录 | `AGENTS.md`、`CLAUDE.md`、`GEMINI.md`、`.cursorrules`、`.github/copilot-instructions.md` |
+| 工具 | 全局 | 项目 |
+| --- | --- | --- |
+| Cursor | `~/.cursor/skills`、`~/.cursor/rules` | `.cursor/skills`、`.cursor/rules` |
+| Claude Code | `~/.claude/skills`、`~/.claude/rules` | `.claude/skills`、`.claude/rules` |
+| Codex | `~/.codex/skills`、`~/.codex/rules`、`~/.codex/prompts` | `.codex/skills`、`.codex/rules`、`.codex/prompts` |
+| Grok | `~/.grok/skills`、`~/.grok/plugins` | `.grok/skills`、`.grok/plugins` |
+| Gemini / Antigravity | `~/.gemini/skills`、`~/.antigravity/skills` | `.gemini/skills`、`.antigravity/skills` |
+| GitHub Copilot | `~/.copilot/skills` | `.github/skills`、`.github/agents`、`.github/instructions` |
+| OpenCode | `~/.config/opencode/skills` | `.opencode/skills` |
+| Windsurf | `~/.codeium/windsurf/skills`、`~/.windsurf/skills` | `.windsurf/skills` |
+| Kiro | `~/.kiro/skills`、`~/.kiro/steering` | `.kiro/skills`、`.kiro/steering` |
+| Cline / Continue | `~/.cline/skills`、`~/.continue/skills` | `.cline/skills`、`.continue/skills` |
+| 通用 agents | `~/.agents/skills` | `.agents/skills`、`skills/` |
+| 其他 | Factory、OpenClaw、Hermes、Qoder、CodeBuddy、Goose、Amp、Roo、Trae、Crush、Pi、cc-switch | 对应的 `.tool/skills` |
+
+也会读取项目说明文件：`AGENTS.md`、`AGENT.md`、`CLAUDE.md`、`GEMINI.md`、`GROK.md`、`CODEX.md`、`COPILOT.md`、`WINDSURF.md`、`OPENCODE.md`、`.cursorrules`、`.windsurfrules`、`.clinerules`、`.github/copilot-instructions.md`。
 
 Token 是估算值，用来比较体积，不是各家官方 tokenizer，不能用来对账。
 

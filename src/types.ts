@@ -1,16 +1,6 @@
 export type Kind = "skill" | "rule";
 
-export type Source =
-  | "cursor-global"
-  | "cursor-project"
-  | "claude-global"
-  | "claude-project"
-  | "codex-global"
-  | "codex-project"
-  | "agents-global"
-  | "agents-project"
-  | "project-root"
-  | "custom";
+export type Source = string;
 
 export interface SkillFile {
   path: string;

@@ -7,7 +7,19 @@ const DESCRIPTION_LIMIT = 1024;
 const DESCRIPTION_MIN = 40;
 const AGENTS_LINE_LIMIT = 100;
 const FIRST_PERSON = /^(i |i'm |i am |i can |i will )/i;
-const AGENT_DOCS = new Set(["agents.md", "claude.md", "gemini.md"]);
+const AGENT_DOCS = new Set([
+  "agents.md",
+  "agent.md",
+  "claude.md",
+  "claude.local.md",
+  "gemini.md",
+  "grok.md",
+  "codex.md",
+  "copilot.md",
+  "windsurf.md",
+  "opencode.md",
+  "kiro.md",
+]);
 
 export function summarizeTokens(files: SkillFile[]): TokenSummary {
   const bySource: TokenSummary["bySource"] = {};

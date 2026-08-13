@@ -36,7 +36,7 @@ export function formatScan(result: ScanResult, summary: TokenSummary, findings: 
   const sources = Object.entries(summary.bySource).sort((a, b) => b[1].files - a[1].files);
   for (const [source, bucket] of sources) {
     lines.push(
-      `  ${source.padEnd(16)} ${String(bucket.files).padStart(5)} files   meta ~${n(bucket.metaTokens)}   body ~${n(bucket.bodyTokens)}`,
+      `  ${source.padEnd(22)} ${String(bucket.files).padStart(5)} files   meta ~${n(bucket.metaTokens)}   body ~${n(bucket.bodyTokens)}`,
     );
   }
 

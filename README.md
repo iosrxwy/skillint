@@ -17,7 +17,7 @@
 
 <p align="center">
   Audit <code>SKILL.md</code>, <code>AGENTS.md</code>, and editor rules used by
-  <b>Codex</b>, <b>Cursor</b>, and <b>Claude Code</b>.
+  <b>Codex</b>, <b>Cursor</b>, <b>Claude Code</b>, <b>Grok</b>, <b>Gemini</b>, <b>Copilot</b>, and other agents.
   Find duplicates, missing metadata, and context bloat before they land in the prompt.
 </p>
 
@@ -45,7 +45,7 @@ That catalog only works when it is **small, named, and described**. A workstatio
 
 ## Features
 
-- **Inventory** — discover skills and rules across Codex, Cursor, Claude Code, and project roots
+- **Inventory** — discover skills and rules across Codex, Cursor, Claude Code, Grok, Gemini, Copilot, and project roots
 - **Health score** — 0–100 catalog score from doctor findings and catalog size
 - **Token budget** — estimate metadata cost vs full-body cost (`characters / 4`)
 - **Doctor** — duplicates, missing/short/first-person descriptions, oversized files, long AGENTS.md
@@ -115,13 +115,22 @@ An agent does not need three million tokens of skills.
 
 ## What it scans
 
-| Agent / surface | Paths |
-| --- | --- |
-| Cursor | `~/.cursor/skills`, `.cursor/skills`, `.cursor/rules` |
-| Claude Code | `~/.claude/skills`, `.claude/skills` |
-| Codex | `~/.codex/skills`, `.codex/skills` |
-| Generic agents | `~/.agents/skills`, `.agents/skills`, `skills/` |
-| Project root | `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursorrules`, `.github/copilot-instructions.md` |
+| Agent | Global | Project |
+| --- | --- | --- |
+| Cursor | `~/.cursor/skills`, `~/.cursor/rules` | `.cursor/skills`, `.cursor/rules` |
+| Claude Code | `~/.claude/skills`, `~/.claude/rules` | `.claude/skills`, `.claude/rules` |
+| Codex | `~/.codex/skills`, `~/.codex/rules`, `~/.codex/prompts` | `.codex/skills`, `.codex/rules`, `.codex/prompts` |
+| Grok | `~/.grok/skills`, `~/.grok/plugins` | `.grok/skills`, `.grok/plugins` |
+| Gemini / Antigravity | `~/.gemini/skills`, `~/.antigravity/skills` | `.gemini/skills`, `.antigravity/skills` |
+| GitHub Copilot | `~/.copilot/skills` | `.github/skills`, `.github/agents`, `.github/instructions` |
+| OpenCode | `~/.config/opencode/skills` | `.opencode/skills` |
+| Windsurf | `~/.codeium/windsurf/skills`, `~/.windsurf/skills` | `.windsurf/skills` |
+| Kiro | `~/.kiro/skills`, `~/.kiro/steering` | `.kiro/skills`, `.kiro/steering` |
+| Cline / Continue | `~/.cline/skills`, `~/.continue/skills` | `.cline/skills`, `.continue/skills` |
+| Shared agents | `~/.agents/skills` | `.agents/skills`, `skills/` |
+| Others | Factory, OpenClaw, Hermes, Qoder, CodeBuddy, Goose, Amp, Roo, Trae, Crush, Pi, cc-switch | matching `.tool/skills` folders |
+
+Also reads project instruction files: `AGENTS.md`, `AGENT.md`, `CLAUDE.md`, `GEMINI.md`, `GROK.md`, `CODEX.md`, `COPILOT.md`, `WINDSURF.md`, `OPENCODE.md`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`.
 
 Token counts are **estimates**, not a vendor tokenizer. Use them to compare size, not to bill APIs.
 

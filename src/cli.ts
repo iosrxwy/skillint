@@ -18,7 +18,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.3.0";
+    return "0.4.0";
   }
 }
 
@@ -42,7 +42,7 @@ function withScanOptions(command: Command): Command {
   return command
     .argument("[paths...]", "optional extra directories to scan")
     .option("--json", "print JSON")
-    .option("-g, --global", "include ~/.cursor, ~/.claude, ~/.codex, ~/.agents")
+    .option("-g, --global", "include user-level dirs for Cursor, Claude, Codex, Grok, Gemini, Copilot, and others")
     .option("-p, --project", "include the current project")
     .option("--ignore <pattern>", "ignore path pattern (repeatable)", collect, []);
 }
@@ -55,7 +55,7 @@ const program = new Command();
 
 program
   .name("skillint")
-  .description("Static analysis for AI agent skills used by Codex, Cursor, and Claude Code")
+  .description("Static analysis for AI agent skills used by Codex, Cursor, Claude Code, Grok, Gemini, Copilot, and others")
   .version(packageVersion())
   .showHelpAfterError()
   .addHelpText(

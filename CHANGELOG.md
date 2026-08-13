@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-08-13
+
+- Discover Grok, Gemini, Copilot, OpenCode, Windsurf, Kiro, Cline, Continue, Antigravity, Factory, OpenClaw, Hermes, Qoder, CodeBuddy, Goose, Amp, Roo, Trae, Crush, Pi, and cc-switch skill folders
+- Follow skill directory symlinks (Grok often links into `~/.agents/skills`)
+- Read extra project instruction files: `GROK.md`, `CODEX.md`, `COPILOT.md`, `WINDSURF.md`, `OPENCODE.md`, `KIRO.md`, `.windsurfrules`, `.clinerules`
+
 ## 0.3.0 — 2026-08-13
 
 - Add a catalog health score (0–100) on `scan` and in reports
