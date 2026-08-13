@@ -380,11 +380,13 @@ This repository dogfoods `doctor` on `./skills` in GitHub Actions.
 
 ## Use it as an agent skill
 
-The repo ships `skills/skillint/SKILL.md`:
+The repo ships a full skill package at `skills/skillint/`:
 
 ```bash
 npx skills add iosrxwy/skillint
 ```
+
+The core `SKILL.md` stays small enough to load on every trigger; the package also bundles a command reference, a security-rule catalog, an MCP setup guide, and worked workflows under `references/` and `examples/` that agents load on demand.
 
 ## Development
 

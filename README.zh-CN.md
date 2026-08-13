@@ -338,6 +338,16 @@ Token 是**物理清单估算值**，用来比较体积；它既不是各家官�
 
 Schema 会提供编辑器自动补全，并抓出拼错的设置。可调阈值：`skillBodyTokens`（4000）、`ruleAlwaysOnTokens`（800）、`descriptionMax`（1024）、`descriptionMin`（40）、`agentsDocLines`（100）、`nameMax`（64）。
 
+## 作为 agent skill 使用
+
+仓库自带完整的 skill 包 `skills/skillint/`：
+
+```bash
+npx skills add iosrxwy/skillint
+```
+
+核心 `SKILL.md` 保持精简、随触发即载；命令速查、安全规则目录、MCP 配置指南和实战工作流放在 `references/` 与 `examples/` 里，供 Agent 按需加载。
+
 ## Star
 
 如果 skillint 让你看到了自己机器上不知道的事，[点个 star](https://github.com/iosrxwy/skillint) 是对项目最大的支持。
