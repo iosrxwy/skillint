@@ -6,10 +6,12 @@ import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { discover } from "./discover.js";
-import { doctor, healthScore, summarizeTokens } from "./doctor.js";
+import { doctor, healthScore, summarizeTokens, type DoctorLimits } from "./doctor.js";
+import { loadConfig } from "./config.js";
 import { formatGithubAnnotations, shouldAnnotate } from "./annotate.js";
 import { compactFiles, formatDoctor, formatGithubSummary, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
 import { loadIgnoreFile } from "./ignore.js";
+import { scaffoldSkill } from "./init.js";
 import { planPrune } from "./prune.js";
 import { formatReport } from "./report.js";
 
@@ -19,23 +21,36 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.6.0";
+    return "0.7.0";
   }
+}
+
+interface ParsedOptions {
+  extraRoots: string[];
+  global: boolean;
+  project: boolean;
+  ignore: string[];
+  limits?: Partial<DoctorLimits>;
 }
 
 async function parseRoots(
   paths: string[],
   opts: { global?: boolean; project?: boolean; ignore?: string[] },
-) {
+): Promise<ParsedOptions> {
   const extraRoots = paths;
   const onlyExtra = extraRoots.length > 0;
   const flagPassed = opts.global === true || opts.project === true;
-  const fromFile = await loadIgnoreFile(resolve(process.cwd(), ".skillintignore"));
+  const cwd = process.cwd();
+  const [fromFile, config] = await Promise.all([
+    loadIgnoreFile(resolve(cwd, ".skillintignore")),
+    loadConfig(cwd),
+  ]);
   return {
     extraRoots,
     global: onlyExtra || flagPassed ? Boolean(opts.global) : true,
     project: onlyExtra || flagPassed ? Boolean(opts.project) : true,
-    ignore: [...fromFile, ...(opts.ignore ?? [])],
+    ignore: [...fromFile, ...(config.ignore ?? []), ...(opts.ignore ?? [])],
+    limits: config.limits,
   };
 }
 
@@ -80,12 +95,14 @@ program
 Examples:
   $ skillint scan
   $ skillint doctor -g
+  $ skillint doctor --fail-under 80
+  $ skillint init code-review
   $ skillint report --out skillint-report.md
   $ skillint prune --keep 12
 
 Exit codes:
   0  success
-  1  doctor findings at or above --fail-on
+  1  doctor findings at or above --fail-on, or health below --fail-under
 `,
   );
 
@@ -95,9 +112,10 @@ withScanOptions(
     .description("Discover skills and rules, then show estimated context cost"),
 ).action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; annotate?: boolean }) => {
   const started = Date.now();
-  const result = await discover(await parseRoots(paths, opts));
+  const parsed = await parseRoots(paths, opts);
+  const result = await discover(parsed);
   const summary = summarizeTokens(result.files);
-  const findings = doctor(result.files);
+  const findings = doctor(result.files, parsed.limits);
   const health = healthScore(result.files, findings);
   const elapsedMs = Date.now() - started;
   if (opts.json) {
@@ -121,14 +139,25 @@ withScanOptions(
   program.command("doctor").description("Find duplicates, missing metadata, and oversized skills"),
 )
   .option("--fail-on <level>", "exit 1 on error or warning", "error")
+  .option("--fail-under <score>", "exit 1 when the health score is below this number (0-100)")
   .option("--max <n>", "max detail rows to print", "40")
   .action(
     async (
       paths: string[],
-      opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; failOn?: string; max?: string; annotate?: boolean },
+      opts: {
+        json?: boolean;
+        global?: boolean;
+        project?: boolean;
+        ignore?: string[];
+        failOn?: string;
+        failUnder?: string;
+        max?: string;
+        annotate?: boolean;
+      },
     ) => {
-      const result = await discover(await parseRoots(paths, opts));
-      const findings = doctor(result.files);
+      const parsed = await parseRoots(paths, opts);
+      const result = await discover(parsed);
+      const findings = doctor(result.files, parsed.limits);
       const health = healthScore(result.files, findings);
       const summary = summarizeTokens(result.files);
       if (opts.json) {
@@ -144,8 +173,23 @@ withScanOptions(
       const warnings = findings.some((item) => item.severity === "warning" || item.severity === "error");
       if (failOn === "error" && errors) process.exitCode = 1;
       if (failOn === "warning" && warnings) process.exitCode = 1;
+      if (opts.failUnder != null) {
+        const threshold = Number.parseInt(opts.failUnder, 10);
+        if (Number.isFinite(threshold) && health.score < threshold) process.exitCode = 1;
+      }
     },
   );
+
+program
+  .command("init <name>")
+  .description("Scaffold a new SKILL.md that passes doctor. Never overwrites files.")
+  .option("-d, --dir <dir>", "parent directory for the skill folder", "skills")
+  .option("--description <text>", "frontmatter description")
+  .action(async (name: string, opts: { dir?: string; description?: string }) => {
+    const { path } = await scaffoldSkill({ name, dir: opts.dir, description: opts.description });
+    console.log(`created ${path}`);
+    console.log("Fill in the description and steps, then run `skillint doctor` to verify.");
+  });
 
 withScanOptions(program.command("tokens").description("Print a compact token budget")).action(
   async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[] }) => {
@@ -189,9 +233,10 @@ withScanOptions(program.command("report").description("Write a Markdown audit re
       paths: string[],
       opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; out?: string },
     ) => {
-      const result = await discover(await parseRoots(paths, opts));
+      const parsed = await parseRoots(paths, opts);
+      const result = await discover(parsed);
       const summary = summarizeTokens(result.files);
-      const findings = doctor(result.files);
+      const findings = doctor(result.files, parsed.limits);
       const markdown = formatReport({
         generatedAt: new Date().toISOString(),
         result,

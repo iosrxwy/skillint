@@ -25,6 +25,8 @@ export type FindingCode =
   | "synced-copy"
   | "duplicate-content"
   | "missing-name"
+  | "name-too-long"
+  | "name-invalid"
   | "missing-description"
   | "empty-body"
   | "oversized"

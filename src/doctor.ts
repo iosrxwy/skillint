@@ -1,12 +1,26 @@
 import { basename } from "node:path";
 import type { Finding, SkillFile, TokenSummary } from "./types.js";
 
-const SKILL_BODY_LIMIT = 4000;
-const RULE_ALWAYS_ON_LIMIT = 800;
-const DESCRIPTION_LIMIT = 1024;
-const DESCRIPTION_MIN = 40;
-const AGENTS_LINE_LIMIT = 100;
+export interface DoctorLimits {
+  skillBodyTokens: number;
+  ruleAlwaysOnTokens: number;
+  descriptionMax: number;
+  descriptionMin: number;
+  agentsDocLines: number;
+  nameMax: number;
+}
+
+export const DEFAULT_LIMITS: DoctorLimits = {
+  skillBodyTokens: 4000,
+  ruleAlwaysOnTokens: 800,
+  descriptionMax: 1024,
+  descriptionMin: 40,
+  agentsDocLines: 100,
+  nameMax: 64,
+};
+
 const FIRST_PERSON = /^(i |i'm |i am |i can |i will )/i;
+const SKILL_NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const AGENT_DOCS = new Set([
   "agents.md",
   "agent.md",
@@ -72,7 +86,8 @@ export function healthScore(files: SkillFile[], findings: Finding[]): { score: n
   return { score, label };
 }
 
-export function doctor(files: SkillFile[]): Finding[] {
+export function doctor(files: SkillFile[], overrides?: Partial<DoctorLimits>): Finding[] {
+  const limits: DoctorLimits = { ...DEFAULT_LIMITS, ...overrides };
   const findings: Finding[] = [];
   const byName = new Map<string, SkillFile[]>();
 
@@ -89,6 +104,20 @@ export function doctor(files: SkillFile[]): Finding[] {
         message: "Skill is missing a name",
         path: file.path,
       });
+    } else if (file.kind === "skill" && file.name.length > limits.nameMax) {
+      findings.push({
+        code: "name-too-long",
+        severity: "warning",
+        message: `Name is ${file.name.length} chars (spec limit ${limits.nameMax})`,
+        path: file.path,
+      });
+    } else if (file.kind === "skill" && !SKILL_NAME_RE.test(file.name)) {
+      findings.push({
+        code: "name-invalid",
+        severity: "warning",
+        message: `Name "${file.name}" should be lowercase letters, digits, and hyphens`,
+        path: file.path,
+      });
     }
 
     if (!file.description) {
@@ -99,18 +128,18 @@ export function doctor(files: SkillFile[]): Finding[] {
         path: file.path,
       });
     } else {
-      if (file.description.length > DESCRIPTION_LIMIT) {
+      if (file.description.length > limits.descriptionMax) {
         findings.push({
           code: "description-too-long",
           severity: "warning",
-          message: `Description is ${file.description.length} chars (limit ${DESCRIPTION_LIMIT})`,
+          message: `Description is ${file.description.length} chars (limit ${limits.descriptionMax})`,
           path: file.path,
         });
-      } else if (file.kind === "skill" && file.description.length < DESCRIPTION_MIN) {
+      } else if (file.kind === "skill" && file.description.length < limits.descriptionMin) {
         findings.push({
           code: "description-too-short",
           severity: "warning",
-          message: `Description is ${file.description.length} chars (keep at least ${DESCRIPTION_MIN})`,
+          message: `Description is ${file.description.length} chars (keep at least ${limits.descriptionMin})`,
           path: file.path,
         });
       }
@@ -133,29 +162,29 @@ export function doctor(files: SkillFile[]): Finding[] {
       });
     }
 
-    if (file.kind === "skill" && file.bodyTokens > SKILL_BODY_LIMIT) {
+    if (file.kind === "skill" && file.bodyTokens > limits.skillBodyTokens) {
       findings.push({
         code: "oversized",
         severity: "warning",
-        message: `Skill body is ~${file.bodyTokens} tokens (keep under ${SKILL_BODY_LIMIT})`,
+        message: `Skill body is ~${file.bodyTokens} tokens (keep under ${limits.skillBodyTokens})`,
         path: file.path,
       });
     }
 
-    if (file.kind === "rule" && file.alwaysApply && file.bodyTokens > RULE_ALWAYS_ON_LIMIT) {
+    if (file.kind === "rule" && file.alwaysApply && file.bodyTokens > limits.ruleAlwaysOnTokens) {
       findings.push({
         code: "always-on-bloat",
         severity: "warning",
-        message: `alwaysApply rule is ~${file.bodyTokens} tokens (keep under ${RULE_ALWAYS_ON_LIMIT})`,
+        message: `alwaysApply rule is ~${file.bodyTokens} tokens (keep under ${limits.ruleAlwaysOnTokens})`,
         path: file.path,
       });
     }
 
-    if (file.kind === "rule" && AGENT_DOCS.has(basename(file.path).toLowerCase()) && file.bodyLines > AGENTS_LINE_LIMIT) {
+    if (file.kind === "rule" && AGENT_DOCS.has(basename(file.path).toLowerCase()) && file.bodyLines > limits.agentsDocLines) {
       findings.push({
         code: "agents-doc-too-long",
         severity: "warning",
-        message: `${basename(file.path)} is ${file.bodyLines} lines (keep under ${AGENTS_LINE_LIMIT})`,
+        message: `${basename(file.path)} is ${file.bodyLines} lines (keep under ${limits.agentsDocLines})`,
         path: file.path,
       });
     }

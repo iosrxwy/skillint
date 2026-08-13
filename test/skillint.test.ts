@@ -3,9 +3,11 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { formatGithubAnnotations } from "../src/annotate.js";
+import { loadConfig } from "../src/config.js";
 import { discover } from "../src/discover.js";
 import { doctor, healthScore, summarizeTokens } from "../src/doctor.js";
 import { parseFrontmatter } from "../src/frontmatter.js";
+import { scaffoldSkill } from "../src/init.js";
 import { planPrune } from "../src/prune.js";
 import type { SkillFile } from "../src/types.js";
 
@@ -283,6 +285,74 @@ Body
       },
     ];
     expect(doctor(files).some((item) => item.code === "duplicate-content")).toBe(true);
+  });
+
+  it("flags skill names that break the spec format", async () => {
+    const root = await mkdtemp(join(tmpdir(), "skillint-names-"));
+    await mkdir(join(root, "Bad_Name"), { recursive: true });
+    await writeFile(
+      join(root, "Bad_Name", "SKILL.md"),
+      `---
+name: Bad_Name
+description: A skill whose name uses uppercase and underscores against the spec.
+---
+
+Body
+`,
+    );
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const findings = doctor(result.files);
+    expect(findings.some((item) => item.code === "name-invalid")).toBe(true);
+  });
+
+  it("honors custom limits from config overrides", async () => {
+    const root = await fixtureRoot();
+    const result = await discover({ extraRoots: [root], global: false, project: false });
+    const strict = doctor(result.files, { skillBodyTokens: 1 });
+    expect(strict.some((item) => item.code === "oversized")).toBe(true);
+  });
+});
+
+describe("init", () => {
+  it("scaffolds a skill that passes doctor with zero findings", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "skillint-init-"));
+    const { path } = await scaffoldSkill({ name: "code-review", cwd });
+    expect(path.endsWith(join("skills", "code-review", "SKILL.md"))).toBe(true);
+
+    const result = await discover({ extraRoots: [join(cwd, "skills")], global: false, project: false });
+    expect(result.files).toHaveLength(1);
+    expect(doctor(result.files)).toHaveLength(0);
+  });
+
+  it("rejects invalid names and refuses to overwrite", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "skillint-init-"));
+    await expect(scaffoldSkill({ name: "Bad Name", cwd })).rejects.toThrow(/lowercase/);
+    await scaffoldSkill({ name: "demo", cwd });
+    await expect(scaffoldSkill({ name: "demo", cwd })).rejects.toThrow(/already exists/);
+  });
+});
+
+describe("config", () => {
+  it("returns empty config when the file is missing", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "skillint-config-"));
+    expect(await loadConfig(cwd)).toEqual({});
+  });
+
+  it("parses ignore patterns and limits", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "skillint-config-"));
+    await writeFile(
+      join(cwd, "skillint.config.json"),
+      JSON.stringify({ ignore: ["vendor"], limits: { skillBodyTokens: 2000 } }),
+    );
+    const config = await loadConfig(cwd);
+    expect(config.ignore).toEqual(["vendor"]);
+    expect(config.limits).toEqual({ skillBodyTokens: 2000 });
+  });
+
+  it("rejects malformed config with a clear error", async () => {
+    const cwd = await mkdtemp(join(tmpdir(), "skillint-config-"));
+    await writeFile(join(cwd, "skillint.config.json"), '{"limits": {"skillBodyTokens": "big"}}');
+    await expect(loadConfig(cwd)).rejects.toThrow(/skillBodyTokens/);
   });
 });
 

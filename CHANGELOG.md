@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 — 2026-08-13
+
+- Add `skillint init <name>` to scaffold a SKILL.md that passes doctor out of the box
+- Check skill names against the spec: lowercase letters, digits, hyphens, max 64 chars
+- Support `skillint.config.json` for shared ignore patterns and custom doctor limits
+- Add `--fail-under <score>` (and a matching Action input) to gate CI on the health score
+
 ## 0.6.0 — 2026-08-13
 
 - Scan catalogs in parallel and skip extra `stat` calls, so large skill libraries finish faster

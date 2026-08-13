@@ -84,6 +84,7 @@ npx skillint scan
 ```bash
 skillint scan                 # inventory + token budget + health bar
 skillint doctor               # diagnostics
+skillint init code-review     # scaffold a SKILL.md that passes doctor
 skillint tokens               # compact numbers
 skillint prune --keep 12      # suggestions only
 skillint report --out out.md  # markdown audit
@@ -96,6 +97,7 @@ skillint scan -g              # user-level dirs only
 skillint scan -p              # current project only
 skillint doctor ./skills      # one directory
 skillint doctor --json --fail-on error
+skillint doctor --fail-under 80   # fail CI when health drops below 80
 ```
 
 `prune` and `report` are read-only. skillint never deletes a skill file.
@@ -157,6 +159,22 @@ Create `.skillintignore` in the working directory, or pass `--ignore`:
 ```bash
 skillint doctor --ignore vendor --ignore "*.bak"
 ```
+
+## Configuration
+
+Put a `skillint.config.json` next to where you run skillint to share ignore patterns and tune the doctor limits:
+
+```json
+{
+  "ignore": ["vendor", "*.bak"],
+  "limits": {
+    "skillBodyTokens": 3000,
+    "descriptionMin": 60
+  }
+}
+```
+
+Available limits: `skillBodyTokens` (4000), `ruleAlwaysOnTokens` (800), `descriptionMax` (1024), `descriptionMin` (40), `agentsDocLines` (100), `nameMax` (64).
 
 ## How it works
 

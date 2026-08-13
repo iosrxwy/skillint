@@ -82,6 +82,7 @@ npx skillint scan
 ```bash
 skillint scan                 # 数量 + token + 健康条
 skillint doctor               # 诊断
+skillint init code-review     # 生成一份能直接通过 doctor 的 SKILL.md
 skillint tokens               # 精简数字
 skillint prune --keep 12      # 只给建议
 skillint report --out out.md  # Markdown 报告
@@ -92,6 +93,7 @@ skillint scan -g              # 只扫用户级目录
 skillint scan -p              # 只扫当前项目
 skillint doctor ./skills
 skillint doctor --json --fail-on error
+skillint doctor --fail-under 80   # 健康分低于 80 时让 CI 失败
 ```
 
 `prune` 和 `report` 都是只读的。skillint 不会删除任何 skill 文件。
@@ -140,6 +142,22 @@ Token 是估算值，用来比较体积，不是各家官方 tokenizer，不能�
 问题会以 PR annotation 标出来。同一个 skill 装在 Cursor / Claude / Grok 里会记成 `synced-copy`（info），不会把 CI 打红。
 
 忽略规则可写在 `.skillintignore`，或使用 `--ignore`。
+
+## 配置文件
+
+在运行目录放一份 `skillint.config.json`，团队可以共享忽略规则并调整 doctor 阈值：
+
+```json
+{
+  "ignore": ["vendor", "*.bak"],
+  "limits": {
+    "skillBodyTokens": 3000,
+    "descriptionMin": 60
+  }
+}
+```
+
+可调阈值：`skillBodyTokens`（4000）、`ruleAlwaysOnTokens`（800）、`descriptionMax`（1024）、`descriptionMin`（40）、`agentsDocLines`（100）、`nameMax`（64）。
 
 ## License
 
