@@ -5,16 +5,18 @@ import { writeFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { mapCatalog } from "./catalog.js";
 import { discover } from "./discover.js";
 import { doctor, healthScore, summarizeTokens, type DoctorLimits } from "./doctor.js";
 import { loadConfig } from "./config.js";
 import { formatGithubAnnotations, shouldAnnotate } from "./annotate.js";
-import { compactFiles, formatDoctor, formatGithubSummary, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
+import { compactFiles, formatDoctor, formatGithubSummary, formatMap, formatPrune, formatScan, formatTokens, toJson } from "./format.js";
 import { loadIgnoreFile } from "./ignore.js";
 import { scaffoldSkill } from "./init.js";
 import { parseFailLevel, parseInteger } from "./options.js";
 import { planPrune } from "./prune.js";
 import { formatReport } from "./report.js";
+import type { Agent } from "./types.js";
 
 function packageVersion(): string {
   try {
@@ -22,7 +24,7 @@ function packageVersion(): string {
     const pkg = JSON.parse(readFileSync(join(here, "..", "package.json"), "utf8")) as { version: string };
     return pkg.version;
   } catch {
-    return "0.8.0";
+    return "0.9.0";
   }
 }
 
@@ -95,6 +97,7 @@ program
     `
 Examples:
   $ skillint scan
+  $ skillint map --agent cursor
   $ skillint doctor -g
   $ skillint doctor --fail-under 80
   $ skillint init code-review
@@ -110,7 +113,7 @@ Exit codes:
 withScanOptions(
   program
     .command("scan", { isDefault: true })
-    .description("Discover skills and rules, then show estimated context cost"),
+    .description("Inventory skill/rule files and estimate their size (not effective loading)"),
 ).action(async (paths: string[], opts: { json?: boolean; global?: boolean; project?: boolean; ignore?: string[]; annotate?: boolean }) => {
   const started = Date.now();
   const parsed = await parseRoots(paths, opts);
@@ -122,6 +125,7 @@ withScanOptions(
   if (opts.json) {
     process.stdout.write(
       toJson({
+        inventory: "physical",
         roots: result.roots,
         summary,
         health,
@@ -135,6 +139,21 @@ withScanOptions(
   writeAnnotations(findings, opts);
   await maybeGithubSummary(formatGithubSummary({ command: "scan", health, summary, findings }));
 });
+
+program
+  .command("map [cwd]")
+  .description("Resolve one agent's effective, coexisting, conditional, shadowed, and unknown resources")
+  .requiredOption("--agent <agent>", "catalog adapter: cursor, claude, or codex")
+  .option("--json", "print schema-versioned JSON")
+  .action(async (cwd: string | undefined, opts: { agent: string; json?: boolean }) => {
+    const agent = parseAgent(opts.agent);
+    const result = await mapCatalog({ agent, cwd });
+    if (opts.json) {
+      process.stdout.write(toJson(result));
+      return;
+    }
+    console.log(formatMap(result));
+  });
 
 withScanOptions(
   program.command("doctor").description("Find duplicates, missing metadata, and oversized skills"),
@@ -259,3 +278,8 @@ program.parseAsync().catch((error: unknown) => {
   console.error(message);
   process.exit(1);
 });
+
+function parseAgent(value: string): Agent {
+  if (value === "cursor" || value === "claude" || value === "codex") return value;
+  throw new Error(`Invalid --agent "${value}". Expected cursor, claude, or codex.`);
+}

@@ -39,11 +39,12 @@
 npx skillint
 ```
 
-这会直接运行默认的本地扫描。审计链路是静态、只读的：skill 只会被当作文本解析，绝不会被执行。`scan`、`doctor`、`tokens`、`prune` 不修改目录；`report` 只写入你指定的报告文件。
+这会运行默认的跨 Agent 物理清单扫描。审计链路是静态、只读的：skill 只会被当作文本解析，绝不会被执行。`scan`、`map`、`doctor`、`tokens`、`prune` 不修改目录；`report` 只写入你指定的报告文件。
 
 ## 它解决什么
 
 - **目录失控**：统一盘点 Codex、Cursor、Claude Code、Grok、Gemini、Copilot、OpenCode、Windsurf、Kiro、Cline 等工具的全局与项目级 skills / rules
+- **按 Agent 解析**：按照 Cursor、Claude Code、Codex 各自的官方发现语义，把资源标为 effective、coexisting、shadowed、conditional 或 unknown
 - **重复项噪声**：跨 Agent 安装记为 `synced-copy`（info），同一 Agent 系列内的重名才记为错误
 - **Skill 规范损坏**：诊断缺失、未闭合或无效的 YAML frontmatter，以及必填字段、命名、正文过大、说明文件过长等问题
 - **上下文体量不明**：用明确标注的估算值（`字符数 / 4`）比较元数据与正文；不冒充精确 tokenizer 成本，也不声称模型实际加载了哪些文件
@@ -69,7 +70,7 @@ npx skillint
 
 ## 安装
 
-需要 Node.js 18.18+。
+需要 Node.js 22.12+。
 
 ```bash
 npx skillint scan
@@ -86,6 +87,7 @@ skillint scan
 
 ```bash
 npx skillint scan                 # 数量 + 体量估算 + 健康条
+npx skillint map --agent cursor   # 当前目录对应的 Cursor 目录
 npx skillint doctor               # 诊断
 npx skillint init code-review     # 生成一份能直接通过 doctor 的 SKILL.md
 npx skillint tokens               # 精简估算
@@ -103,6 +105,31 @@ npx skillint doctor --fail-under 80   # 健康分低于 80 时让 CI 失败
 
 审计命令不会修改或删除被扫描的 skill。`report` 只创建指定的报告，`init` 也绝不会覆盖已有的 `SKILL.md`。
 
+## Agent 感知的目录映射
+
+`scan` 是覆盖多种工具的物理文件清单。它的 token 总量只描述磁盘上发现的文件，不代表某个 Agent 的有效目录，也不声称模型加载了全部文件。
+
+`map` 会针对一个工作目录应用指定 Agent 的适配器：
+
+```bash
+npx skillint map [cwd] --agent cursor
+npx skillint map [cwd] --agent claude
+npx skillint map [cwd] --agent codex
+npx skillint map . --agent codex --json
+```
+
+JSON 输出包含 `schemaVersion: 1`，并提供逻辑路径、真实路径、作用域、资源角色、来源类型、官方文档 URL、可见性和解析方式。
+
+- `effective`：静态上属于当前说明链，或无条件加载
+- `coexisting`：官方语义明确让同名资源作为独立条目共存
+- `shadowed`：官方优先级规则明确选择了另一个已观察到的资源
+- `conditional`：是否可用取决于目录/文件上下文、glob、手动调用或 Agent 的相关性判断
+- `unknown`：行为未被官方说明、来源由外部托管，或依赖 `skillint` 未解析的信任/配置状态
+
+`map` 不预测模型是否会触发某个 skill。Cursor 的同名 skill 优先级会标为 unknown，而不是猜测；Claude 的个人/项目优先级和目录限定 skill 会按官方语义处理；Codex 的同名 skills 共存，`AGENTS.override.md` 只会在同一目录层级盖过 `AGENTS.md`。托管与内置来源只作为限制说明，不会伪造成本地文件。
+
+适配器语义来自当前官方文档：[Cursor skills](https://cursor.com/docs/skills) 与 [rules](https://cursor.com/docs/rules)、[Claude Code skills](https://code.claude.com/docs/en/skills) 与 [memory](https://code.claude.com/docs/en/memory)，以及 [Codex skills](https://developers.openai.com/codex/skills) 与 [`AGENTS.md`](https://developers.openai.com/codex/guides/agents-md)。
+
 ## 真实扫描结果
 
 在一台装了大量 skills 的开发机上：
@@ -115,7 +142,9 @@ npx skillint doctor --fail-under 80   # 健康分低于 80 时让 CI 失败
 
 约 334 万 token 是对已发现文件的体量估算，不代表任何 Agent 会把整个目录全部加载。
 
-## 扫描范围
+## `scan` 的物理清单范围
+
+这些目录用于跨 Agent 的磁盘清单审计，其中包含兼容与旧版位置。需要查看某个 Agent 当前的有效目录语义时，请使用 `map`。
 
 | 工具 | 全局 | 项目 |
 | --- | --- | --- |
@@ -134,7 +163,7 @@ npx skillint doctor --fail-under 80   # 健康分低于 80 时让 CI 失败
 
 也会读取项目说明文件：`AGENTS.md`、`AGENT.md`、`CLAUDE.md`、`GEMINI.md`、`GROK.md`、`CODEX.md`、`COPILOT.md`、`WINDSURF.md`、`OPENCODE.md`、`.cursorrules`、`.windsurfrules`、`.clinerules`、`.github/copilot-instructions.md`。
 
-Token 是估算值，用来比较体积，不是各家官方 tokenizer，不能用来对账。
+Token 是**物理清单估算值**，用来比较体积；它既不是各家官方 tokenizer，也不代表模型上下文，不能用来对账。
 
 ## GitHub Action
 

@@ -2,6 +2,72 @@ export type Kind = "skill" | "rule";
 
 export type Source = string;
 
+export type Agent = "cursor" | "claude" | "codex";
+export type Scope = "managed" | "admin" | "system" | "user" | "project" | "directory";
+export type ResourceRole = "skill" | "rule" | "instruction";
+export type Visibility = "effective" | "coexisting" | "shadowed" | "conditional" | "unknown";
+export type Resolution =
+  | "direct"
+  | "instruction-chain"
+  | "same-name-coexists"
+  | "higher-precedence"
+  | "same-level-override"
+  | "context-dependent"
+  | "agent-defined"
+  | "unobservable"
+  | "not-parsed";
+export type LogicalPath = string;
+export type RealPath = string;
+export type SourceKind =
+  | "native"
+  | "shared"
+  | "compatibility"
+  | "legacy"
+  | "implementation"
+  | "managed"
+  | "bundled";
+export type SourceDocUrl = string;
+
+export type CatalogAgent = Agent;
+export type CatalogScope = Scope;
+export type ResourceVisibility = Visibility;
+export type ResourceResolution = Resolution;
+
+export interface CatalogResource {
+  agent: Agent;
+  scope: Scope;
+  role: ResourceRole;
+  name: string;
+  visibility: Visibility;
+  resolution: Resolution;
+  logicalPath: LogicalPath;
+  realPath: RealPath;
+  sourceKind: SourceKind;
+  sourceDocUrl: SourceDocUrl;
+  note?: string;
+}
+
+export interface CatalogNotice {
+  code: "unobservable-source" | "configuration-not-parsed" | "trust-not-parsed" | "walker-limit";
+  visibility: "unknown";
+  sourceKind: SourceKind;
+  message: string;
+  sourceDocUrl: SourceDocUrl;
+}
+
+export interface CatalogResult {
+  schemaVersion: 1;
+  agent: Agent;
+  cwd: LogicalPath;
+  projectRoot: LogicalPath;
+  resources: CatalogResource[];
+  notices: CatalogNotice[];
+  limits: {
+    maxDepth: number;
+    maxDirectories: number;
+  };
+}
+
 export interface SkillFile {
   path: string;
   kind: Kind;

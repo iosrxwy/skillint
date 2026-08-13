@@ -41,7 +41,7 @@
 
 ## インストール
 
-Node.js 18.18 以降が必要です。
+Node.js 22.12 以降が必要です。
 
 ```bash
 git clone https://github.com/iosrxwy/skillint.git

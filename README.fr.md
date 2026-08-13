@@ -42,7 +42,7 @@ Ce catalogue ne fonctionne que s’il est **court, nommé et décrit**. Une mach
 
 ## Installation
 
-Node.js 18.18 ou plus récent.
+Node.js 22.12 ou plus récent.
 
 ```bash
 git clone https://github.com/iosrxwy/skillint.git

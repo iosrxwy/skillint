@@ -1,6 +1,14 @@
 import pc from "picocolors";
 import { healthScore } from "./doctor.js";
-import type { Finding, PrunePlan, ScanResult, SkillFile, TokenSummary } from "./types.js";
+import type {
+  CatalogResult,
+  Finding,
+  PrunePlan,
+  ScanResult,
+  SkillFile,
+  TokenSummary,
+  Visibility,
+} from "./types.js";
 
 function n(value: number): string {
   return value.toLocaleString("en-US");
@@ -34,12 +42,14 @@ export function formatScan(
 ): string {
   const health = healthScore(result.files, findings);
   const lines = [
-    pc.bold("skillint scan"),
+    pc.bold("skillint scan · physical inventory"),
+    "",
+    pc.dim("Cross-agent file inventory and size estimates; use `skillint map` for one agent's catalog."),
     "",
     `${plural(result.roots.length, "root")} · ${plural(summary.skills, "skill")} · ${plural(summary.rules, "rule")}`,
     `health ${String(health.score).padStart(3)}/100  ${healthBar(health.score)}  ${healthLabel(health.label)}`,
     "",
-    pc.bold("Context cost"),
+    pc.bold("Inventory size estimate"),
     `  metadata (name + description):  ~${n(summary.metaTokens)} tokens`,
     `  all bodies if fully loaded:     ~${n(summary.bodyTokens)} tokens`,
     `  always-on rules:                ~${n(summary.alwaysOnTokens)} tokens`,
@@ -67,6 +77,55 @@ export function formatScan(
   }
   if (elapsedMs != null) {
     lines.push("", pc.dim(`scanned in ${formatDuration(elapsedMs)}`));
+  }
+
+  return lines.join("\n");
+}
+
+export function formatMap(result: CatalogResult): string {
+  const counts = new Map<Visibility, number>();
+  for (const resource of result.resources) {
+    counts.set(resource.visibility, (counts.get(resource.visibility) ?? 0) + 1);
+  }
+  const count = (visibility: Visibility) => counts.get(visibility) ?? 0;
+  const lines = [
+    pc.bold(`skillint map · ${result.agent}`),
+    "",
+    pc.dim("Static catalog resolution only; this does not predict model triggering."),
+    `cwd          ${result.cwd}`,
+    `project root ${result.projectRoot}`,
+    "",
+    `${plural(result.resources.length, "resource")} · ${count("effective")} effective · ${count("coexisting")} coexisting · ${count("shadowed")} shadowed · ${count("conditional")} conditional · ${count("unknown")} unknown`,
+  ];
+
+  if (result.resources.length === 0) {
+    lines.push("", pc.dim("No observable resources found."));
+  } else {
+    lines.push("", pc.bold("Resources"));
+    for (const resource of result.resources) {
+      const status =
+        resource.visibility === "effective"
+          ? pc.green(resource.visibility)
+          : resource.visibility === "shadowed"
+            ? pc.dim(resource.visibility)
+            : resource.visibility === "unknown"
+              ? pc.yellow(resource.visibility)
+              : resource.visibility;
+      lines.push(
+        `  ${status.padEnd(11)} ${resource.role.padEnd(11)} ${resource.scope.padEnd(9)} ${resource.sourceKind.padEnd(14)} ${resource.name}`,
+      );
+      lines.push(`  ${"".padEnd(49)}${pc.dim(resource.logicalPath)}`);
+      if (resource.realPath !== resource.logicalPath) {
+        lines.push(`  ${"".padEnd(49)}${pc.dim(`real → ${resource.realPath}`)}`);
+      }
+    }
+  }
+
+  if (result.notices.length > 0) {
+    lines.push("", pc.bold("Unknowns"));
+    for (const notice of result.notices) {
+      lines.push(`  ? ${notice.message}`);
+    }
   }
 
   return lines.join("\n");

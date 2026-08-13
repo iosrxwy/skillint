@@ -1,10 +1,11 @@
 import { homedir } from "node:os";
-import { basename, dirname, join, relative, resolve, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { createHash } from "node:crypto";
-import { open, readdir, readFile, realpath, stat } from "node:fs/promises";
+import { open, readFile, stat } from "node:fs/promises";
 import { asBoolean, asString, estimateTokens, parseFrontmatter } from "./frontmatter.js";
 import { isIgnored } from "./ignore.js";
 import type { Kind, ScanResult, SkillFile, Source } from "./types.js";
+import { walkBounded } from "./walk.js";
 
 const SKILL_NAMES = new Set(["skill.md"]);
 const RULE_NAMES = new Set([
@@ -149,6 +150,14 @@ function projectRoots(cwd: string): Array<{ root: string; source: Source }> {
 function classify(filePath: string, root: string, source: Source): Kind | null {
   const name = basename(filePath).toLowerCase();
   if (SKILL_NAMES.has(name)) return "skill";
+  const rootParent = basename(dirname(root)).toLowerCase();
+  const rootName = basename(root).toLowerCase();
+  if (rootParent === ".cursor" && rootName === "rules") {
+    return name.endsWith(".mdc") ? "rule" : null;
+  }
+  if (rootParent === ".claude" && rootName === "rules") {
+    return name.endsWith(".md") ? "rule" : null;
+  }
   if (name.endsWith(".mdc")) return "rule";
   if (RULE_NAMES.has(name)) {
     if (source === "project-root") {
@@ -174,7 +183,6 @@ async function exists(path: string): Promise<boolean> {
   }
 }
 
-const SKIP_DIRS = new Set(["node_modules", ".git", "dist", "coverage", ".next", "vendor"]);
 const MAX_READ_BYTES = 512 * 1024;
 const READ_CONCURRENCY = 32;
 
@@ -220,32 +228,18 @@ async function walkFiles(root: string, source: Source, cwd: string): Promise<str
     return files;
   }
 
-  const out: string[] = [];
-  const seenReal = new Set<string>();
+  const walked = await walkBounded(root, { allowExternalRootSymlinks: true });
+  return walked.files.map((item) => item.logicalPath);
+}
 
-  async function walk(dir: string): Promise<void> {
-    const real = await realpath(dir).catch(() => dir);
-    if (seenReal.has(real)) return;
-    seenReal.add(real);
+function isInside(filePath: string, directory: string): boolean {
+  const rel = relative(directory, filePath);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+}
 
-    const entries = await readdir(dir, { withFileTypes: true });
-    for (const entry of entries) {
-      if (SKIP_DIRS.has(entry.name)) continue;
-      const full = join(dir, entry.name);
-      if (entry.isSymbolicLink()) {
-        const target = await stat(full).catch(() => null);
-        if (!target) continue;
-        if (target.isDirectory()) await walk(full);
-        else if (target.isFile()) out.push(full);
-        continue;
-      }
-      if (entry.isDirectory()) await walk(full);
-      else if (entry.isFile()) out.push(full);
-    }
-  }
-
-  await walk(root);
-  return out;
+function isSkillSupportFile(filePath: string, skillDirectories: string[]): boolean {
+  if (SKILL_NAMES.has(basename(filePath).toLowerCase())) return false;
+  return skillDirectories.some((directory) => isInside(filePath, directory));
 }
 
 function folderName(filePath: string): string {
@@ -345,8 +339,12 @@ export async function discover(options: DiscoverOptions = {}): Promise<ScanResul
   await Promise.all(
     live.map(async ({ root, source }) => {
       const paths = await walkFiles(root, source, cwd);
+      const skillDirectories = paths
+        .filter((filePath) => SKILL_NAMES.has(basename(filePath).toLowerCase()))
+        .map((filePath) => dirname(filePath));
       for (const filePath of paths) {
         if (isIgnored(filePath, ignore)) continue;
+        if (isSkillSupportFile(filePath, skillDirectories)) continue;
         const kind = classify(filePath, root, source);
         if (!kind) continue;
         found.push({ filePath, kind, source });

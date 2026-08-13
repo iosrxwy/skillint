@@ -41,11 +41,12 @@
 npx skillint
 ```
 
-This runs the default local scan. The audit path is static and read-only: scanned skills are parsed as text and never executed. `scan`, `doctor`, `tokens`, and `prune` do not modify the catalog; `report` writes only the output file you request.
+This runs the default cross-agent physical inventory. The audit path is static and read-only: scanned skills are parsed as text and never executed. `scan`, `map`, `doctor`, `tokens`, and `prune` do not modify the catalog; `report` writes only the output file you request.
 
 ## What it solves
 
 - **Catalog sprawl** — inventory global and project skills and rules across Codex, Cursor, Claude Code, Grok, Gemini, Copilot, OpenCode, Windsurf, Kiro, Cline, and more
+- **Agent-specific resolution** — map Cursor, Claude Code, or Codex resources as effective, coexisting, shadowed, conditional, or unknown using each agent's documented discovery semantics
 - **Duplicate noise** — report cross-agent installs as `synced-copy` info while keeping same-agent-family name collisions as errors
 - **Broken skill specs** — diagnose missing, unclosed, or invalid YAML frontmatter; required fields; naming issues; oversized bodies; and long instruction files
 - **Unknown context size** — compare metadata and body size using explicit estimates (`characters / 4`), not exact tokenizer cost or a claim about what any model loaded
@@ -71,7 +72,7 @@ Coding agents can discover instructions from many global and project directories
 
 ## Install
 
-Requires Node.js 18.18 or later.
+Requires Node.js 22.12 or later.
 
 ```bash
 npx skillint scan
@@ -88,6 +89,7 @@ skillint scan
 
 ```bash
 npx skillint scan                 # inventory + estimated size + health bar
+npx skillint map --agent cursor   # Cursor's catalog for this directory
 npx skillint doctor               # diagnostics
 npx skillint init code-review     # scaffold a SKILL.md that passes doctor
 npx skillint tokens               # compact estimates
@@ -107,6 +109,31 @@ npx skillint doctor --fail-under 80   # fail CI when health drops below 80
 
 Audit commands never mutate or delete scanned skill files. `report` creates only the requested report, and `init` never overwrites an existing `SKILL.md`.
 
+## Agent-aware map
+
+`scan` is a broad physical inventory across many tools. Its token totals describe files found on disk; they are not an effective catalog and do not claim that an agent or model loaded every file.
+
+`map` applies one agent adapter to a working directory:
+
+```bash
+npx skillint map [cwd] --agent cursor
+npx skillint map [cwd] --agent claude
+npx skillint map [cwd] --agent codex
+npx skillint map . --agent codex --json
+```
+
+JSON output has `schemaVersion: 1` and includes logical and real paths, scope, resource role, source kind, official documentation URL, visibility, and resolution.
+
+- `effective` — statically part of the current instruction chain or unconditionally loaded
+- `coexisting` — official semantics keep same-name resources available as distinct entries
+- `shadowed` — an official precedence rule selects another observed resource
+- `conditional` — availability depends on file/directory context, globs, manual invocation, or the agent's relevance decision
+- `unknown` — behavior is undocumented, managed outside observable roots, or depends on trust/configuration that `skillint` did not parse
+
+The map deliberately does not predict whether a model will trigger a skill. Cursor same-name skill precedence is reported as unknown rather than guessed. Claude's personal/project precedence and directory-qualified skills are modeled. Codex same-name skills coexist, and `AGENTS.override.md` shadows `AGENTS.md` only at the same directory level. Managed and bundled sources are listed as limitations instead of fabricated files.
+
+Adapter semantics follow the current official docs for [Cursor skills](https://cursor.com/docs/skills) and [rules](https://cursor.com/docs/rules), [Claude Code skills](https://code.claude.com/docs/en/skills) and [memory](https://code.claude.com/docs/en/memory), and [Codex skills](https://developers.openai.com/codex/skills) and [`AGENTS.md`](https://developers.openai.com/codex/guides/agents-md).
+
 ## Example
 
 From a developer machine with a large local skill library:
@@ -119,7 +146,9 @@ From a developer machine with a large local skill library:
 
 The ~3.3M-token figure is a sizing estimate for the discovered files, not a claim that any agent loads the entire catalog.
 
-## What it scans
+## What `scan` inventories
+
+These are physical inventory roots retained for cross-agent auditing, including compatibility and legacy locations. Use `map` when you need one agent's current effective catalog semantics.
 
 | Agent | Global | Project |
 | --- | --- | --- |
@@ -138,7 +167,7 @@ The ~3.3M-token figure is a sizing estimate for the discovered files, not a clai
 
 Also reads project instruction files: `AGENTS.md`, `AGENT.md`, `CLAUDE.md`, `GEMINI.md`, `GROK.md`, `CODEX.md`, `COPILOT.md`, `WINDSURF.md`, `OPENCODE.md`, `.cursorrules`, `.windsurfrules`, `.clinerules`, `.github/copilot-instructions.md`.
 
-Token counts are **estimates**, not a vendor tokenizer. Use them to compare size, not to bill APIs.
+Token counts are **physical inventory estimates**, not a vendor tokenizer or a prediction of model context. Use them to compare size, not to bill APIs.
 
 ## GitHub Action
 
@@ -186,11 +215,13 @@ The schema provides editor completion and catches misspelled settings. Available
 
 ```mermaid
 flowchart LR
-  A[Skill folders] --> B[discover]
+  A[Physical roots] --> B[discover]
   B --> C[doctor]
   C --> D[health score]
   C --> E[report / JSON / CI]
   B --> F[token budget]
+  G[Agent + cwd] --> H[map adapter]
+  H --> I[effective / conditional / unknown catalog]
 ```
 
 Audit commands never execute scanned skills or modify the catalog. `init` creates a new skill, and `report` writes only the report path you request.

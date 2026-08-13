@@ -42,7 +42,7 @@
 
 ## Установка
 
-Нужен Node.js 18.18 или новее.
+Нужен Node.js 22.12 или новее.
 
 ```bash
 git clone https://github.com/iosrxwy/skillint.git

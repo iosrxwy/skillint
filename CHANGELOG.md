@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.9.0 — 2026-08-13
+
+- Add `skillint map [cwd] --agent cursor|claude|codex` with text output and schema-versioned JSON
+- Model documented native, shared, compatibility, user, project, and directory resource scopes without predicting model triggering
+- Report effective, coexisting, shadowed, conditional, and unknown resources, including explicit managed/configuration limitations
+- Fix false rule classification for `rules/`, `prompts/`, `references/AGENTS.md`, and other support files inside skill packages
+- Add bounded realpath-aware catalog walking with cycle prevention, depth/directory limits, and guarded symlink traversal
+- Correct Cursor `.mdc`, Claude `CLAUDE.md`/rules/skill precedence, and Codex `.agents/skills`/`AGENTS.override.md` semantics
+- Label broad `scan` output as a physical inventory estimate rather than an effective agent catalog
+- Raise the runtime baseline to Node.js 22.12 so it matches Commander 15 and supported CI runtimes
+
 ## 0.8.0 — 2026-08-13
 
 - Detect missing, unclosed, and invalid YAML frontmatter instead of silently inferring valid metadata

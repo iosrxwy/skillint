@@ -42,7 +42,7 @@ Dieser Katalog funktioniert nur, wenn er **klein, benannt und beschrieben** ist.
 
 ## Installation
 
-Node.js 18.18 oder neuer.
+Node.js 22.12 oder neuer.
 
 ```bash
 git clone https://github.com/iosrxwy/skillint.git

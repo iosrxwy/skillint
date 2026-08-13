@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [18, 20, 22]
+        node: [22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,6 +21,7 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: node dist/cli.js doctor ./skills --fail-on error
+      - run: node dist/cli.js map . --agent codex --json
 
   package:
     runs-on: ubuntu-latest
@@ -28,7 +29,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm audit --omit=dev
@@ -43,3 +44,4 @@ jobs:
           cd "$sandbox"
           node_modules/.bin/skillint init smoke-test
           node_modules/.bin/skillint doctor ./skills --fail-on warning --fail-under 100
+          node_modules/.bin/skillint map . --agent codex --json
