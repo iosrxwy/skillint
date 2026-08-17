@@ -1,6 +1,6 @@
 # Skill Security Observatory
 
-Generated 2026-08-13 by [`skillint scan-remote`](https://github.com/iosrxwy/skillint). Static pattern scan of public skill repositories — nothing is executed, and a finding is a *lead to review*, not a conviction. Install instructions inside a skill (e.g. `curl | bash`) are exactly what an agent may run on your machine.
+Generated 2026-08-17 by [`skillint scan-remote`](https://github.com/iosrxwy/skillint). Static pattern scan of public skill repositories — nothing is executed, and a finding is a *lead to review*, not a conviction. Install instructions inside a skill (e.g. `curl | bash`) are exactly what an agent may run on your machine.
 
 | Repository | Verdict | Skills | High-risk | Warnings | Notes |
 | --- | --- | ---: | ---: | ---: | --- |
